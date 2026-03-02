@@ -27,6 +27,12 @@ makemigrations:
 migrate:
     python manage.py migrate
 
+# Run migrations and seed the database
+prepare:
+    python manage.py makemigrations
+    python manage.py migrate
+    python manage.py seed
+
 # ── Development ──────────────────────────────────────────────────────────────
 
 # Start the Django development server

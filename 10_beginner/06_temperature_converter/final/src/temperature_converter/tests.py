@@ -1,46 +1,35 @@
+from decimal import Decimal
 from django.test import TestCase, Client
-from django.contrib.auth.models import User
 from django.urls import reverse
-from .models import Item
+from django.contrib.auth.models import User
+from .models import Conversion
+from .views import convert_temperature
 
-class ItemTests(TestCase):
-    def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(
-            username='tester', password='secret123'
-        )
-        self.item = Item.objects.create(
-            title='Test Item',
-            description='A test item',
-            author=self.user,
-        )
 
-    def test_list_view(self):
-        resp = self.client.get(reverse('temperature_converter:list'))
-        self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Test Item')
+class ConversionMathTests(TestCase):
+    def test_convert_c_to_f(self):
+        result = convert_temperature(Decimal('100'), 'C', 'F')
+        self.assertAlmostEqual(float(result), 212.0, places=2)
 
-    def test_detail_view(self):
-        resp = self.client.get(
-            reverse('temperature_converter:detail', kwargs={'pk': self.item.pk})
-        )
+    def test_convert_f_to_c(self):
+        result = convert_temperature(Decimal('32'), 'F', 'C')
+        self.assertAlmostEqual(float(result), 0.0, places=2)
+
+    def test_convert_to_kelvin(self):
+        result = convert_temperature(Decimal('0'), 'C', 'K')
+        self.assertAlmostEqual(float(result), 273.15, places=2)
+
+    def test_get_view(self):
+        client = Client()
+        resp = client.get(reverse('temperature_converter:list'))
         self.assertEqual(resp.status_code, 200)
 
-    def test_create_requires_login(self):
-        resp = self.client.get(reverse('temperature_converter:create'))
-        self.assertNotEqual(resp.status_code, 200)
-
-    def test_create_item(self):
-        self.client.login(username='tester', password='secret123')
-        resp = self.client.post(
-            reverse('temperature_converter:create'),
-            {'title': 'New Item', 'description': 'Created in test'},
-        )
-        self.assertEqual(Item.objects.count(), 2)
-
-    def test_delete_item(self):
-        self.client.login(username='tester', password='secret123')
-        self.client.post(
-            reverse('temperature_converter:delete', kwargs={'pk': self.item.pk})
-        )
-        self.assertEqual(Item.objects.count(), 0)
+    def test_post_valid(self):
+        client = Client()
+        resp = client.post(reverse('temperature_converter:list'), {
+            'value_in': '100',
+            'unit_in': 'C',
+            'unit_out': 'F',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(Conversion.objects.count(), 1)

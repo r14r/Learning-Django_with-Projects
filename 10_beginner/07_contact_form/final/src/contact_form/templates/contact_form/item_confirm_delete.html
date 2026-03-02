@@ -1,11 +1,36 @@
 {% extends "base.html" %}
-{% block title %}Delete Item{% endblock %}
+{% block title %}Inbox{% endblock %}
 {% block content %}
-<h1>Delete "{{ object.title }}"?</h1>
-<p>This action cannot be undone.</p>
-<form method="post">
-  {% csrf_token %}
-  <button type="submit" class="btn btn-danger">Yes, delete</button>
-  <a href="{% url 'contact_form:detail' object.pk %}" class="btn btn-outline-secondary">Cancel</a>
-</form>
+<h1>�� Inbox</h1>
+{% if messages_list %}
+<table class="table table-hover mt-3">
+  <thead class="table-dark">
+    <tr><th>Subject</th><th>From</th><th>Status</th><th>Date</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for msg in messages_list %}
+    <tr class="{% if not msg.is_read %}fw-bold{% endif %}">
+      <td>{{ msg.subject }}</td>
+      <td>{{ msg.name }}</td>
+      <td>{% if msg.is_read %}<span class="badge bg-secondary">Read</span>{% else %}<span class="badge bg-warning text-dark">Unread</span>{% endif %}</td>
+      <td>{{ msg.submitted_at|date:"Y-m-d" }}</td>
+      <td><a href="{% url 'contact_form:detail' msg.pk %}" class="btn btn-sm btn-outline-primary">View</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% if is_paginated %}
+<nav><ul class="pagination">
+  {% if page_obj.has_previous %}
+  <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+  {% endif %}
+  <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+  {% if page_obj.has_next %}
+  <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+  {% endif %}
+</ul></nav>
+{% endif %}
+{% else %}
+<p class="text-muted mt-3">No messages yet.</p>
+{% endif %}
 {% endblock %}

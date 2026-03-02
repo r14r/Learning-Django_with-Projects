@@ -1,46 +1,42 @@
 from django.test import TestCase, Client
-from django.contrib.auth.models import User
 from django.urls import reverse
-from .models import Item
+from django.contrib.auth.models import User
+from .models import ContactMessage
 
-class ItemTests(TestCase):
+
+class ContactFormTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(
-            username='tester', password='secret123'
-        )
-        self.item = Item.objects.create(
-            title='Test Item',
-            description='A test item',
-            author=self.user,
-        )
+        self.admin = User.objects.create_user(username='admin', password='pass123')
 
-    def test_list_view(self):
+    def test_public_form_get(self):
         resp = self.client.get(reverse('contact_form:list'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Test Item')
 
-    def test_detail_view(self):
-        resp = self.client.get(
-            reverse('contact_form:detail', kwargs={'pk': self.item.pk})
-        )
-        self.assertEqual(resp.status_code, 200)
+    def test_submit_contact(self):
+        resp = self.client.post(reverse('contact_form:list'), {
+            'name': 'Alice',
+            'email': 'alice@example.com',
+            'subject': 'Hello',
+            'message': 'Test message',
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(ContactMessage.objects.count(), 1)
 
-    def test_create_requires_login(self):
-        resp = self.client.get(reverse('contact_form:create'))
+    def test_inbox_requires_login(self):
+        resp = self.client.get(reverse('contact_form:inbox'))
         self.assertNotEqual(resp.status_code, 200)
 
-    def test_create_item(self):
-        self.client.login(username='tester', password='secret123')
-        resp = self.client.post(
-            reverse('contact_form:create'),
-            {'title': 'New Item', 'description': 'Created in test'},
+    def test_mark_read(self):
+        msg = ContactMessage.objects.create(
+            name='Bob', email='bob@example.com',
+            subject='Hi', message='Hello',
         )
-        self.assertEqual(Item.objects.count(), 2)
+        self.client.login(username='admin', password='pass123')
+        self.client.post(reverse('contact_form:mark-read', kwargs={'pk': msg.pk}))
+        msg.refresh_from_db()
+        self.assertTrue(msg.is_read)
 
-    def test_delete_item(self):
-        self.client.login(username='tester', password='secret123')
-        self.client.post(
-            reverse('contact_form:delete', kwargs={'pk': self.item.pk})
-        )
-        self.assertEqual(Item.objects.count(), 0)
+    def test_message_str(self):
+        msg = ContactMessage(name='Carol', subject='Test')
+        self.assertIn('Carol', str(msg))
