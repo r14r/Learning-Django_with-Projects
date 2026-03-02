@@ -38,10 +38,10 @@ install:
     uv pip install -r requirements.txt
 
 # ── Working with a project ───────────────────────────────────────────────────
-# To work on a project, navigate to its `steps/final/src/` directory, then use
+# To work on a project, navigate to its `final/src/` directory, then use
 # the project-level `justfile` commands:
 #
-#   cd 10_beginner/01_hello_django/steps/final/src
+#   cd 10_beginner/01_hello_django/final/src
 #   just setup       # create .venv and install deps
 #   just migrate     # apply database migrations
 #   just run         # start the dev server
