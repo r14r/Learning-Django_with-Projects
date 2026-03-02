@@ -37,7 +37,6 @@ class ConverterView(View):
 
     def post(self, request):
         form = ConverterForm(request.POST)
-        recent = Conversion.objects.all()[:10]
         if form.is_valid():
             value_in = form.cleaned_data['value_in']
             unit_in  = form.cleaned_data['unit_in']
@@ -56,6 +55,7 @@ class ConverterView(View):
                 'result': conversion,
                 'recent': recent,
             })
+        recent = Conversion.objects.all()[:10]
         return render(request, self.template_name, {'form': form, 'recent': recent})
 
 
