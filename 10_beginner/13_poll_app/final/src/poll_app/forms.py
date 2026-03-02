@@ -1,11 +1,13 @@
 from django import forms
-from .models import Item
 
-class ItemForm(forms.ModelForm):
+from .models import Poll
+
+
+class PollForm(forms.ModelForm):
     class Meta:
-        model  = Item
-        fields = ['title', 'description']
+        model = Poll
+        fields = ['question', 'description']
         widgets = {
+            'question': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'title':       forms.TextInput(attrs={'class': 'form-control'}),
         }
