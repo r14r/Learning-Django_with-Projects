@@ -1,11 +1,17 @@
 from django import forms
-from .models import Item
+from .models import Book
 
-class ItemForm(forms.ModelForm):
+
+class BookForm(forms.ModelForm):
     class Meta:
-        model  = Item
-        fields = ['title', 'description']
+        model  = Book
+        fields = ['title', 'author_name', 'isbn', 'genre', 'published_year',
+                  'description', 'cover', 'available']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'title':       forms.TextInput(attrs={'class': 'form-control'}),
+            'title':          forms.TextInput(attrs={'class': 'form-control'}),
+            'author_name':    forms.TextInput(attrs={'class': 'form-control'}),
+            'isbn':           forms.TextInput(attrs={'class': 'form-control'}),
+            'genre':          forms.TextInput(attrs={'class': 'form-control'}),
+            'published_year': forms.NumberInput(attrs={'class': 'form-control'}),
+            'description':    forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
         }
