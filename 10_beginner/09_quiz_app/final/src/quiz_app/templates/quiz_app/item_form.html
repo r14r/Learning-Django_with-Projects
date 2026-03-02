@@ -1,11 +1,21 @@
 {% extends "base.html" %}
-{% block title %}{% if object %}Edit{% else %}New{% endif %} Item{% endblock %}
+{% block title %}Create Quiz{% endblock %}
 {% block content %}
-<h1>{% if object %}Edit Item{% else %}New Item{% endif %}</h1>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit" class="btn btn-primary">Save</button>
-  <a href="{% url 'quiz_app:list' %}" class="btn btn-outline-secondary">Cancel</a>
-</form>
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <h1 class="mb-4">Create New Quiz</h1>
+    <form method="post" class="card p-4 shadow-sm">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="mb-3">
+        <label class="form-label fw-bold">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-success">Create Quiz</button>
+      <a href="{% url 'quiz_app:list' %}" class="btn btn-outline-secondary ms-2">Cancel</a>
+    </form>
+  </div>
+</div>
 {% endblock %}

@@ -1,11 +1,12 @@
 from django import forms
-from .models import Item
+from .models import Quiz
 
-class ItemForm(forms.ModelForm):
+
+class QuizForm(forms.ModelForm):
     class Meta:
-        model  = Item
+        model  = Quiz
         fields = ['title', 'description']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
             'title':       forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
         }

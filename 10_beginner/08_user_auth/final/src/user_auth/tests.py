@@ -1,46 +1,49 @@
 from django.test import TestCase, Client
-from django.contrib.auth.models import User
 from django.urls import reverse
-from .models import Item
+from django.contrib.auth.models import User
+from .models import UserProfile
 
-class ItemTests(TestCase):
+
+class UserAuthTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(
             username='tester', password='secret123'
         )
-        self.item = Item.objects.create(
-            title='Test Item',
-            description='A test item',
-            author=self.user,
-        )
 
-    def test_list_view(self):
+    def test_register_view(self):
+        resp = self.client.get(reverse('user_auth:register'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_dashboard_requires_login(self):
         resp = self.client.get(reverse('user_auth:list'))
-        self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Test Item')
-
-    def test_detail_view(self):
-        resp = self.client.get(
-            reverse('user_auth:detail', kwargs={'pk': self.item.pk})
-        )
-        self.assertEqual(resp.status_code, 200)
-
-    def test_create_requires_login(self):
-        resp = self.client.get(reverse('user_auth:create'))
         self.assertNotEqual(resp.status_code, 200)
 
-    def test_create_item(self):
-        self.client.login(username='tester', password='secret123')
-        resp = self.client.post(
-            reverse('user_auth:create'),
-            {'title': 'New Item', 'description': 'Created in test'},
-        )
-        self.assertEqual(Item.objects.count(), 2)
+    def test_profile_created_on_register(self):
+        self.client.post(reverse('user_auth:register'), {
+            'username': 'newuser',
+            'email': 'new@example.com',
+            'password1': 'TestPass123!',
+            'password2': 'TestPass123!',
+        })
+        self.assertTrue(User.objects.filter(username='newuser').exists())
+        user = User.objects.get(username='newuser')
+        self.assertTrue(hasattr(user, 'profile'))
 
-    def test_delete_item(self):
+    def test_profile_edit(self):
         self.client.login(username='tester', password='secret123')
-        self.client.post(
-            reverse('user_auth:delete', kwargs={'pk': self.item.pk})
+        resp = self.client.post(reverse('user_auth:update'), {
+            'bio': 'Hello world',
+            'location': 'NYC',
+            'website': '',
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.bio, 'Hello world')
+
+    def test_profile_view(self):
+        self.client.login(username='tester', password='secret123')
+        resp = self.client.get(
+            reverse('user_auth:detail', kwargs={'pk': self.user.profile.pk})
         )
-        self.assertEqual(Item.objects.count(), 0)
+        self.assertEqual(resp.status_code, 200)

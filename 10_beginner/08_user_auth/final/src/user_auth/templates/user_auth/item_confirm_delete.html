@@ -1,11 +1,21 @@
 {% extends "base.html" %}
-{% block title %}Delete Item{% endblock %}
+{% block title %}Register{% endblock %}
 {% block content %}
-<h1>Delete "{{ object.title }}"?</h1>
-<p>This action cannot be undone.</p>
-<form method="post">
-  {% csrf_token %}
-  <button type="submit" class="btn btn-danger">Yes, delete</button>
-  <a href="{% url 'user_auth:detail' object.pk %}" class="btn btn-outline-secondary">Cancel</a>
-</form>
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <h1 class="mb-4">Create Account</h1>
+    <form method="post" class="card p-4 shadow-sm">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="mb-3">
+        <label class="form-label fw-bold">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-success w-100">Register</button>
+    </form>
+    <p class="text-center mt-3">Already have an account? <a href="{% url 'login' %}">Login</a></p>
+  </div>
+</div>
 {% endblock %}

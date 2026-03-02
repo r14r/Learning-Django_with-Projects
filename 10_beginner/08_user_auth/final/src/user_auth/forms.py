@@ -1,11 +1,31 @@
 from django import forms
-from .models import Item
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+from .models import UserProfile
 
-class ItemForm(forms.ModelForm):
+
+class RegisterForm(UserCreationForm):
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'your@email.com'}),
+    )
+
     class Meta:
-        model  = Item
-        fields = ['title', 'description']
+        model  = User
+        fields = ['username', 'email', 'password1', 'password2']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.setdefault('class', 'form-control')
+
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model  = UserProfile
+        fields = ['bio', 'avatar', 'location', 'website']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'title':       forms.TextInput(attrs={'class': 'form-control'}),
+            'bio':      forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'location': forms.TextInput(attrs={'class': 'form-control'}),
+            'website':  forms.URLInput(attrs={'class': 'form-control'}),
         }
