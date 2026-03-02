@@ -1,11 +1,11 @@
 from django.urls import path
+
 from . import views
 
 app_name = 'url_shortener'
 urlpatterns = [
-    path('',               views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/',      views.ItemDetailView.as_view(), name='detail'),
-    path('create/',        views.ItemCreateView.as_view(), name='create'),
-    path('<int:pk>/edit/', views.ItemUpdateView.as_view(), name='update'),
-    path('<int:pk>/del/',  views.ItemDeleteView.as_view(), name='delete'),
+    path('', views.ShortenView.as_view(), name='list'),
+    path('my-urls/', views.URLListView.as_view(), name='my-urls'),
+    path('<int:pk>/del/', views.URLDeleteView.as_view(), name='delete'),
+    path('<str:short_code>/', views.RedirectView.as_view(), name='redirect'),
 ]
