@@ -1,0 +1,64 @@
+# justfile — temperature_converter
+# Run `just` (or `just --list`) to see all available commands.
+
+default:
+    @just --list
+
+# ── Setup ───────────────────────────────────────────────────────────────────
+
+# Create a virtual environment and install all dependencies
+setup:
+    python3 -m venv .venv
+    .venv/bin/pip install --upgrade pip
+    .venv/bin/pip install uv
+    .venv/bin/uv pip install -r requirements.txt
+
+# Install dependencies into the active virtual environment
+install:
+    uv pip install -r requirements.txt
+
+# ── Database ─────────────────────────────────────────────────────────────────
+
+# Create new migration files from model changes
+makemigrations:
+    python manage.py makemigrations
+
+# Apply pending database migrations
+migrate:
+    python manage.py migrate
+
+# ── Development ──────────────────────────────────────────────────────────────
+
+# Start the Django development server
+run:
+    python manage.py runserver
+
+# Open the Django interactive shell
+shell:
+    python manage.py shell
+
+# ── Testing ──────────────────────────────────────────────────────────────────
+
+# Run the full test suite
+test:
+    python manage.py test temperature_converter
+
+# ── Administration ───────────────────────────────────────────────────────────
+
+# Create a Django superuser interactively
+createsuperuser:
+    python manage.py createsuperuser
+
+# Collect static files into STATIC_ROOT
+collectstatic:
+    python manage.py collectstatic --noinput
+
+# ── Utilities ────────────────────────────────────────────────────────────────
+
+# Check the project for common problems
+check:
+    python manage.py check
+
+# Display all registered URL patterns
+urls:
+    python manage.py show_urls 2>/dev/null || python manage.py shell -c "from django.urls import get_resolver; [print(p.pattern) for p in get_resolver().url_patterns]"
