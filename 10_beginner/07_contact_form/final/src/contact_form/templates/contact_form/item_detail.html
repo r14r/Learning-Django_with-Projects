@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ object.title }}{% endblock %}
+{% block content %}
+<h1>{{ object.title }}</h1>
+<p class="text-muted">By {{ object.author }} on {{ object.created_at|date:"Y-m-d" }}</p>
+<p>{{ object.description }}</p>
+{% if user == object.author %}
+<a href="{% url 'contact_form:update' object.pk %}" class="btn btn-secondary">Edit</a>
+<a href="{% url 'contact_form:delete' object.pk %}" class="btn btn-danger">Delete</a>
+{% endif %}
+<a href="{% url 'contact_form:list' %}" class="btn btn-outline-secondary">Back</a>
+{% endblock %}
