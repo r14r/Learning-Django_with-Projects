@@ -1,11 +1,14 @@
 from django import forms
-from .models import Item
+from .models import Todo
 
-class ItemForm(forms.ModelForm):
+
+class TodoForm(forms.ModelForm):
     class Meta:
-        model  = Item
-        fields = ['title', 'description']
+        model  = Todo
+        fields = ['title', 'description', 'priority', 'due_date']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
             'title':       forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'priority':    forms.Select(attrs={'class': 'form-select'}),
+            'due_date':    forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         }

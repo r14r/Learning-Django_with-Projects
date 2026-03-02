@@ -3,9 +3,9 @@ from . import views
 
 app_name = 'simple_blog'
 urlpatterns = [
-    path('',               views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/',      views.ItemDetailView.as_view(), name='detail'),
-    path('create/',        views.ItemCreateView.as_view(), name='create'),
-    path('<int:pk>/edit/', views.ItemUpdateView.as_view(), name='update'),
-    path('<int:pk>/del/',  views.ItemDeleteView.as_view(), name='delete'),
+    path('',                   views.PostListView.as_view(),   name='list'),
+    path('create/',             views.PostCreateView.as_view(), name='create'),
+    path('<slug:slug>/',        views.PostDetailView.as_view(), name='detail'),
+    path('<slug:slug>/edit/',   views.PostUpdateView.as_view(), name='update'),
+    path('<slug:slug>/del/',    views.PostDeleteView.as_view(), name='delete'),
 ]

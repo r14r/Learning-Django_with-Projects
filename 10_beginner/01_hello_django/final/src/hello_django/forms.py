@@ -1,11 +1,12 @@
 from django import forms
-from .models import Item
+from .models import Message
 
-class ItemForm(forms.ModelForm):
+
+class MessageForm(forms.ModelForm):
     class Meta:
-        model  = Item
-        fields = ['title', 'description']
+        model  = Message
+        fields = ['title', 'body']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'title':       forms.TextInput(attrs={'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'body':  forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
         }

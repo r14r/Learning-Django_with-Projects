@@ -1,37 +1,44 @@
-from django.views.generic import (
-    ListView, DetailView, CreateView, UpdateView, DeleteView,
-)
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
-from .models import Item
-from .forms import ItemForm
+from .models import Post
+from .forms import PostForm
 
 
-class ItemListView(ListView):
-    model       = Item
-    paginate_by = 10
+class PostListView(ListView):
+    model               = Post
+    template_name       = 'simple_blog/item_list.html'
+    context_object_name = 'object_list'
+    paginate_by         = 10
+    queryset            = Post.objects.filter(published=True)
 
 
-class ItemDetailView(DetailView):
-    model = Item
+class PostDetailView(DetailView):
+    model         = Post
+    template_name = 'simple_blog/item_detail.html'
+    slug_field    = 'slug'
+    slug_url_kwarg = 'slug'
 
 
-class ItemCreateView(LoginRequiredMixin, CreateView):
-    model       = Item
-    form_class  = ItemForm
-    success_url = reverse_lazy('simple_blog:list')
+class PostCreateView(LoginRequiredMixin, CreateView):
+    model         = Post
+    form_class    = PostForm
+    template_name = 'simple_blog/item_form.html'
+    success_url   = reverse_lazy('simple_blog:list')
 
     def form_valid(self, form):
         form.instance.author = self.request.user
         return super().form_valid(form)
 
 
-class ItemUpdateView(LoginRequiredMixin, UpdateView):
-    model       = Item
-    form_class  = ItemForm
-    success_url = reverse_lazy('simple_blog:list')
+class PostUpdateView(LoginRequiredMixin, UpdateView):
+    model         = Post
+    form_class    = PostForm
+    template_name = 'simple_blog/item_form.html'
+    success_url   = reverse_lazy('simple_blog:list')
 
 
-class ItemDeleteView(LoginRequiredMixin, DeleteView):
-    model       = Item
-    success_url = reverse_lazy('simple_blog:list')
+class PostDeleteView(LoginRequiredMixin, DeleteView):
+    model         = Post
+    template_name = 'simple_blog/item_confirm_delete.html'
+    success_url   = reverse_lazy('simple_blog:list')

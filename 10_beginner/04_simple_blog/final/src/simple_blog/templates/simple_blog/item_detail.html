@@ -1,12 +1,15 @@
 {% extends "base.html" %}
 {% block title %}{{ object.title }}{% endblock %}
 {% block content %}
-<h1>{{ object.title }}</h1>
-<p class="text-muted">By {{ object.author }} on {{ object.created_at|date:"Y-m-d" }}</p>
-<p>{{ object.description }}</p>
+<article>
+  <h1>{{ object.title }}</h1>
+  <p class="text-muted">By {{ object.author }} · {{ object.created_at|date:"F j, Y" }}</p>
+  <hr>
+  <div>{{ object.body|linebreaks }}</div>
+</article>
 {% if user == object.author %}
-<a href="{% url 'simple_blog:update' object.pk %}" class="btn btn-secondary">Edit</a>
-<a href="{% url 'simple_blog:delete' object.pk %}" class="btn btn-danger">Delete</a>
+<a href="{% url 'simple_blog:update' object.slug %}" class="btn btn-secondary">Edit</a>
+<a href="{% url 'simple_blog:delete' object.slug %}" class="btn btn-danger">Delete</a>
 {% endif %}
-<a href="{% url 'simple_blog:list' %}" class="btn btn-outline-secondary">Back</a>
+<a href="{% url 'simple_blog:list' %}" class="btn btn-outline-secondary">Back to Blog</a>
 {% endblock %}

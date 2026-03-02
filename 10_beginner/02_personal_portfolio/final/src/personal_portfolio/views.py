@@ -1,24 +1,26 @@
-from django.views.generic import (
-    ListView, DetailView, CreateView, UpdateView, DeleteView,
-)
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
-from .models import Item
-from .forms import ItemForm
+from .models import Project
+from .forms import ProjectForm
 
 
-class ItemListView(ListView):
-    model       = Item
-    paginate_by = 10
+class ProjectListView(ListView):
+    model = Project
+    template_name = 'personal_portfolio/item_list.html'
+    context_object_name = 'object_list'
+    paginate_by = 9
 
 
-class ItemDetailView(DetailView):
-    model = Item
+class ProjectDetailView(DetailView):
+    model = Project
+    template_name = 'personal_portfolio/item_detail.html'
 
 
-class ItemCreateView(LoginRequiredMixin, CreateView):
-    model       = Item
-    form_class  = ItemForm
+class ProjectCreateView(LoginRequiredMixin, CreateView):
+    model      = Project
+    form_class = ProjectForm
+    template_name = 'personal_portfolio/item_form.html'
     success_url = reverse_lazy('personal_portfolio:list')
 
     def form_valid(self, form):
@@ -26,12 +28,14 @@ class ItemCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class ItemUpdateView(LoginRequiredMixin, UpdateView):
-    model       = Item
-    form_class  = ItemForm
+class ProjectUpdateView(LoginRequiredMixin, UpdateView):
+    model      = Project
+    form_class = ProjectForm
+    template_name = 'personal_portfolio/item_form.html'
     success_url = reverse_lazy('personal_portfolio:list')
 
 
-class ItemDeleteView(LoginRequiredMixin, DeleteView):
-    model       = Item
+class ProjectDeleteView(LoginRequiredMixin, DeleteView):
+    model       = Project
+    template_name = 'personal_portfolio/item_confirm_delete.html'
     success_url = reverse_lazy('personal_portfolio:list')

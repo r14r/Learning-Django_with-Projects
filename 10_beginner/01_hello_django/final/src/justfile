@@ -62,3 +62,11 @@ check:
 # Display all registered URL patterns
 urls:
     python manage.py show_urls 2>/dev/null || python manage.py shell -c "from django.urls import get_resolver; [print(p.pattern) for p in get_resolver().url_patterns]"
+
+# ── Prepare ──────────────────────────────────────────────────────────────────
+
+# Run migrations and seed the database
+prepare:
+    python manage.py makemigrations
+    python manage.py migrate
+    python manage.py seed

@@ -1,46 +1,34 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
-from .models import Item
+from .models import Calculation
+from .views import safe_eval
 
-class ItemTests(TestCase):
+
+class CalculatorTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(
-            username='tester', password='secret123'
-        )
-        self.item = Item.objects.create(
-            title='Test Item',
-            description='A test item',
-            author=self.user,
-        )
 
-    def test_list_view(self):
+    def test_safe_eval_addition(self):
+        self.assertEqual(safe_eval('2 + 3'), '5')
+
+    def test_safe_eval_multiplication(self):
+        self.assertEqual(safe_eval('4 * 5'), '20')
+
+    def test_safe_eval_division_by_zero(self):
+        with self.assertRaises(ValueError):
+            safe_eval('1 / 0')
+
+    def test_safe_eval_invalid_chars(self):
+        with self.assertRaises(ValueError):
+            safe_eval('__import__("os")')
+
+    def test_calculator_get(self):
         resp = self.client.get(reverse('web_calculator:list'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Test Item')
 
-    def test_detail_view(self):
-        resp = self.client.get(
-            reverse('web_calculator:detail', kwargs={'pk': self.item.pk})
-        )
+    def test_calculator_post_valid(self):
+        resp = self.client.post(reverse('web_calculator:list'), {'expression': '10 + 5'})
         self.assertEqual(resp.status_code, 200)
-
-    def test_create_requires_login(self):
-        resp = self.client.get(reverse('web_calculator:create'))
-        self.assertNotEqual(resp.status_code, 200)
-
-    def test_create_item(self):
-        self.client.login(username='tester', password='secret123')
-        resp = self.client.post(
-            reverse('web_calculator:create'),
-            {'title': 'New Item', 'description': 'Created in test'},
-        )
-        self.assertEqual(Item.objects.count(), 2)
-
-    def test_delete_item(self):
-        self.client.login(username='tester', password='secret123')
-        self.client.post(
-            reverse('web_calculator:delete', kwargs={'pk': self.item.pk})
-        )
-        self.assertEqual(Item.objects.count(), 0)
+        self.assertContains(resp, '15')
+        self.assertEqual(Calculation.objects.count(), 1)
