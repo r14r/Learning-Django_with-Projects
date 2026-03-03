@@ -1,46 +1,39 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
-from .models import Item
+from django.utils import timezone
+from .models import PageView, Event
 
-class ItemTests(TestCase):
+
+class AnalyticsTests(TestCase):
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(
-            username='tester', password='secret123'
-        )
-        self.item = Item.objects.create(
-            title='Test Item',
-            description='A test item',
-            author=self.user,
-        )
+        self.client_http = Client()
+        self.user        = User.objects.create_user('admin', password='pass')
+        # Create sample page views
+        for i in range(5):
+            PageView.objects.create(path='/page/', timestamp=timezone.now())
+        PageView.objects.create(path='/other/', timestamp=timezone.now())
 
-    def test_list_view(self):
-        resp = self.client.get(reverse('analytics_dashboard:list'))
-        self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Test Item')
-
-    def test_detail_view(self):
-        resp = self.client.get(
-            reverse('analytics_dashboard:detail', kwargs={'pk': self.item.pk})
-        )
-        self.assertEqual(resp.status_code, 200)
-
-    def test_create_requires_login(self):
-        resp = self.client.get(reverse('analytics_dashboard:create'))
+    def test_dashboard_requires_login(self):
+        resp = self.client_http.get(reverse('analytics_dashboard:dashboard'))
         self.assertNotEqual(resp.status_code, 200)
 
-    def test_create_item(self):
-        self.client.login(username='tester', password='secret123')
-        resp = self.client.post(
-            reverse('analytics_dashboard:create'),
-            {'title': 'New Item', 'description': 'Created in test'},
-        )
-        self.assertEqual(Item.objects.count(), 2)
+    def test_dashboard_view(self):
+        self.client_http.login(username='admin', password='pass')
+        resp = self.client_http.get(reverse('analytics_dashboard:dashboard'))
+        self.assertEqual(resp.status_code, 200)
 
-    def test_delete_item(self):
-        self.client.login(username='tester', password='secret123')
-        self.client.post(
-            reverse('analytics_dashboard:delete', kwargs={'pk': self.item.pk})
+    def test_record_event_api(self):
+        resp = self.client_http.post(
+            reverse('analytics_dashboard:event'),
+            {'name': 'button_click', 'properties': '{}'},
+            content_type='application/json',
         )
-        self.assertEqual(Item.objects.count(), 0)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(Event.objects.count(), 1)
+
+    def test_top_pages(self):
+        from django.db.models import Count
+        top = PageView.objects.values('path').annotate(count=Count('id')).order_by('-count')
+        self.assertEqual(top[0]['path'], '/page/')
+        self.assertEqual(top[0]['count'], 5)

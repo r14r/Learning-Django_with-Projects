@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.shortcuts import render
 
 def home(request):
-    return HttpResponse('<h1>Welcome to E-Commerce Store!</h1>')
+    return render(request, 'ecommerce_store/home.html', {})

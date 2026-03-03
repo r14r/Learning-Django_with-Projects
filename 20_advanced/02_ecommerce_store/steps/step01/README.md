@@ -1,72 +1,16 @@
-# Step 1 – Project Setup & Django Basics
-
-## What you'll build
-A minimal Django project with a working home page.
-
-## Instructions
+# Step 1 – Project Setup & Home Page
 
 ```bash
-# 1. Create a virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# 2. Install Django
-pip install django python-decouple
-pip freeze > requirements.txt
-
-# 3. Create the project
+pip install django python-decouple Pillow
 django-admin startproject config .
-
-# 4. Create the application
 python manage.py startapp ecommerce_store
-```
-
-## config/settings.py (relevant parts)
-
-```python
-from decouple import config
-
-SECRET_KEY = config('SECRET_KEY', default='change-me-in-production')
-DEBUG = config('DEBUG', default=True, cast=bool)
-
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'ecommerce_store',          # ← add your app
-]
 ```
 
 ## ecommerce_store/views.py
 
 ```python
-from django.http import HttpResponse
+from django.shortcuts import render
 
 def home(request):
-    return HttpResponse('<h1>Welcome to E-Commerce Store!</h1>')
+    return render(request, 'ecommerce_store/home.html', {})
 ```
-
-## config/urls.py
-
-```python
-from django.contrib import admin
-from django.urls import path
-from ecommerce_store import views
-
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('',       views.home, name='home'),
-]
-```
-
-## Run it
-
-```bash
-python manage.py migrate
-python manage.py runserver
-```
-
-Open http://127.0.0.1:8000/ — you should see "Welcome to E-Commerce Store!"

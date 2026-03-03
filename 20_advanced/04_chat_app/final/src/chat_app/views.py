@@ -1,37 +1,29 @@
-from django.views.generic import (
-    ListView, DetailView, CreateView, UpdateView, DeleteView,
-)
+from django.views.generic import ListView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import render, get_object_or_404
 from django.urls import reverse_lazy
-from .models import Item
-from .forms import ItemForm
+from .models import Room, Message
+from .forms import RoomForm
 
 
-class ItemListView(ListView):
-    model       = Item
-    paginate_by = 10
+class RoomListView(LoginRequiredMixin, ListView):
+    model               = Room
+    template_name       = 'chat_app/room_list.html'
+    context_object_name = 'rooms'
 
 
-class ItemDetailView(DetailView):
-    model = Item
+class RoomCreateView(LoginRequiredMixin, CreateView):
+    model         = Room
+    form_class    = RoomForm
+    template_name = 'chat_app/room_form.html'
+    success_url   = reverse_lazy('chat_app:list')
 
 
-class ItemCreateView(LoginRequiredMixin, CreateView):
-    model       = Item
-    form_class  = ItemForm
-    success_url = reverse_lazy('chat_app:list')
-
-    def form_valid(self, form):
-        form.instance.author = self.request.user
-        return super().form_valid(form)
-
-
-class ItemUpdateView(LoginRequiredMixin, UpdateView):
-    model       = Item
-    form_class  = ItemForm
-    success_url = reverse_lazy('chat_app:list')
-
-
-class ItemDeleteView(LoginRequiredMixin, DeleteView):
-    model       = Item
-    success_url = reverse_lazy('chat_app:list')
+def room_view(request, slug):
+    from django.contrib.auth.decorators import login_required
+    room     = get_object_or_404(Room, slug=slug)
+    messages = list(room.messages.select_related('author').order_by('-timestamp')[:50])
+    messages.reverse()
+    return render(request, 'chat_app/room.html', {
+        'room': room, 'messages': messages,
+    })

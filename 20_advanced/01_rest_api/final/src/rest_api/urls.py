@@ -1,11 +1,15 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from rest_framework.authtoken.views import obtain_auth_token
 from . import views
 
-app_name = 'rest_api'
+router = DefaultRouter()
+router.register('authors', views.AuthorViewSet)
+router.register('books',   views.BookViewSet)
+
 urlpatterns = [
-    path('',               views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/',      views.ItemDetailView.as_view(), name='detail'),
-    path('create/',        views.ItemCreateView.as_view(), name='create'),
-    path('<int:pk>/edit/', views.ItemUpdateView.as_view(), name='update'),
-    path('<int:pk>/del/',  views.ItemDeleteView.as_view(), name='delete'),
+    path('health/',           views.health,          name='health'),
+    path('auth/register/',    views.register,        name='register'),
+    path('auth/login/',       obtain_auth_token,     name='login'),
+    path('', include(router.urls)),
 ]

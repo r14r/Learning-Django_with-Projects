@@ -1,78 +1,39 @@
-# Step 3 – Templates & List / Detail Views
+# Step 3 – WebSocket Consumer
 
-## What you'll add
-HTML templates with Bootstrap 5 and class-based list / detail views.
-
-## Directory structure
-
-```
-chat_app/
-└── templates/
-    └── chat_app/
-        ├── base.html
-        ├── item_list.html
-        └── item_detail.html
-```
-
-## templates/base.html
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{% block title %}Real-Time Chat{% endblock %}</title>
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/css/bootstrap.min.css">
-</head>
-<body>
-<nav class="navbar navbar-dark bg-dark px-3">
-    <a class="navbar-brand" href="/">Real-Time Chat</a>
-</nav>
-<div class="container mt-4">
-    {% block content %}{% endblock %}
-</div>
-</body>
-</html>
-```
-
-## chat_app/views.py
+## chat_app/consumers.py
 
 ```python
-from django.views.generic import ListView, DetailView
-from .models import Item
+import json
+from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.db import database_sync_to_async
 
-class ItemListView(ListView):
-    model        = Item
-    paginate_by  = 10
-    # template: chat_app/item_list.html
+class ChatConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.room_slug  = self.scope['url_route']['kwargs']['slug']
+        self.group_name = f'chat_{self.room_slug}'
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
 
-class ItemDetailView(DetailView):
-    model = Item
-    # template: chat_app/item_detail.html
-```
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
-## config/urls.py
+    async def receive(self, text_data):
+        data    = json.loads(text_data)
+        content = data['message']
+        user    = self.scope['user']
+        await self.save_message(user, content)
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'chat_message', 'message': content, 'username': user.username,
+        })
 
-```python
-from django.contrib import admin
-from django.urls import path, include
+    async def chat_message(self, event):
+        await self.send(text_data=json.dumps({
+            'message': event['message'], 'username': event['username'],
+        }))
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('',       include('chat_app.urls')),
-]
-```
-
-## chat_app/urls.py
-
-```python
-from django.urls import path
-from . import views
-
-app_name = 'chat_app'
-urlpatterns = [
-    path('',          views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/', views.ItemDetailView.as_view(), name='detail'),
-]
+    @database_sync_to_async
+    def save_message(self, user, content):
+        from .models import Room, Message
+        room = Room.objects.get(slug=self.room_slug)
+        Message.objects.create(room=room, author=user, content=content)
 ```

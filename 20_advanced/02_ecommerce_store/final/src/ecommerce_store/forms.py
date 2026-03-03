@@ -1,11 +1,16 @@
 from django import forms
-from .models import Item
+from .models import Order
 
-class ItemForm(forms.ModelForm):
+
+class CheckoutForm(forms.ModelForm):
     class Meta:
-        model  = Item
-        fields = ['title', 'description']
+        model  = Order
+        fields = ['first_name', 'last_name', 'email', 'address']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'title':       forms.TextInput(attrs={'class': 'form-control'}),
+            'address': forms.Textarea(attrs={'rows': 3}),
         }
+
+
+class CartAddForm(forms.Form):
+    quantity = forms.IntegerField(min_value=1, max_value=50, initial=1)
+    override = forms.BooleanField(required=False, initial=False, widget=forms.HiddenInput)

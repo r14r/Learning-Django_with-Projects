@@ -1,72 +1,68 @@
-# Step 1 – Project Setup & Django Basics
+# Step 1 – Project Setup & DRF Installation
 
 ## What you'll build
-A minimal Django project with a working home page.
+A minimal Django project with DRF installed and a single health-check endpoint.
 
 ## Instructions
 
 ```bash
-# 1. Create a virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# 2. Install Django
-pip install django python-decouple
-pip freeze > requirements.txt
-
-# 3. Create the project
+pip install django djangorestframework python-decouple
 django-admin startproject config .
-
-# 4. Create the application
 python manage.py startapp rest_api
 ```
 
-## config/settings.py (relevant parts)
+## config/settings.py additions
 
 ```python
-from decouple import config
-
-SECRET_KEY = config('SECRET_KEY', default='change-me-in-production')
-DEBUG = config('DEBUG', default=True, cast=bool)
-
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'rest_api',          # ← add your app
+    ...
+    'rest_framework',
+    'rest_api',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
+}
 ```
 
 ## rest_api/views.py
 
 ```python
-from django.http import HttpResponse
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
-def home(request):
-    return HttpResponse('<h1>Welcome to REST API with DRF!</h1>')
+@api_view(['GET'])
+def health(request):
+    return Response({'status': 'ok', 'message': 'REST API with DRF is running'})
 ```
 
 ## config/urls.py
 
 ```python
-from django.contrib import admin
-from django.urls import path
-from rest_api import views
+from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('',       views.home, name='home'),
+    path('api/',   include('rest_api.urls')),
 ]
 ```
 
-## Run it
+## rest_api/urls.py
+
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('health/', views.health, name='health'),
+]
+```
+
+## Run & test
 
 ```bash
 python manage.py migrate
 python manage.py runserver
+curl http://127.0.0.1:8000/api/health/
+# {"status": "ok", "message": "REST API with DRF is running"}
 ```
-
-Open http://127.0.0.1:8000/ — you should see "Welcome to REST API with DRF!"

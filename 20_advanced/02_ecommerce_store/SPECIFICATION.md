@@ -8,15 +8,15 @@
 
 ## 1. Overview
 
-Product catalog, shopping cart and checkout. This project teaches fundamental Django concepts appropriate for the **advanced** level including models, views, templates, forms and URL routing.
+Build a working e-commerce store with a product catalogue, a session-based shopping
+cart, and a checkout workflow that creates `Order` records.
 
 ## 2. Goals
 
-- Understand the Django request/response cycle
-- Create and apply database models with Django ORM
-- Build HTML templates using the Django template language
-- Handle user input through Django forms
-- Write clean, testable Django code
+- Model products with categories, images and inventory
+- Implement a session-based cart without requiring login to browse
+- Build a checkout form that creates an Order and clears the cart
+- Protect the order history with login-required views
 
 ## 3. Functional Requirements
 
@@ -24,68 +24,84 @@ Product catalog, shopping cart and checkout. This project teaches fundamental Dj
 
 | # | Feature | Priority |
 |---|---------|----------|
-| 1 | Display a home page | Must |
-| 2 | List and detail views for the main entity | Must |
-| 3 | Create / Edit / Delete (CRUD) operations | Must |
-| 4 | Basic user authentication (login/logout) | Should |
-| 5 | Input validation and error messages | Should |
-| 6 | Responsive HTML layout | Could |
+| 1 | Product list with category filter and search | Must |
+| 2 | Product detail page with add-to-cart button | Must |
+| 3 | Cart page (view, update quantity, remove) | Must |
+| 4 | Checkout form (name, email, address) | Must |
+| 5 | Order confirmation page | Must |
+| 6 | Order history for logged-in users | Should |
+| 7 | Admin: manage products, categories, orders | Should |
+| 8 | Low-stock warnings | Could |
 
 ### 3.2 User Stories
 
-- **As a visitor**, I want to browse the main content so that I can find what I need.
-- **As a registered user**, I want to create and manage my own entries.
-- **As an admin**, I want to manage all content through the Django admin interface.
+- **As a shopper**, I can browse products by category and add them to my cart.
+- **As a shopper**, I can update quantities or remove items from my cart.
+- **As a shopper**, I can check out by entering my shipping details.
+- **As a logged-in user**, I can see my past orders.
+- **As an admin**, I can add, edit and remove products and see all orders.
 
-## 4. Non-Functional Requirements
-
-- The application must run on Django 4.2+ with Python 3.11+
-- Pages must load within 2 seconds on a local development server
-- All forms must validate input and display meaningful error messages
-- Code must follow PEP 8 style guidelines
-
-## 5. Data Model
+## 4. Data Model
 
 ```
-Entity
-├── id          : AutoField (primary key)
-├── title       : CharField(max_length=200)
-├── description : TextField(blank=True)
-├── created_at  : DateTimeField(auto_now_add=True)
-├── updated_at  : DateTimeField(auto_now=True)
-└── author      : ForeignKey(User, on_delete=CASCADE)
+Category
+├── id    : AutoField
+├── name  : CharField(max_length=100)
+└── slug  : SlugField(unique=True)
+
+Product
+├── id          : AutoField
+├── category    : ForeignKey(Category)
+├── name        : CharField(max_length=200)
+├── slug        : SlugField(unique=True)
+├── description : TextField
+├── price       : DecimalField(max_digits=8, decimal_places=2)
+├── image       : ImageField(upload_to='products/')
+├── stock       : PositiveIntegerField
+├── available   : BooleanField(default=True)
+└── created_at  : DateTimeField(auto_now_add=True)
+
+Order
+├── id           : AutoField
+├── user         : ForeignKey(User, null=True)
+├── first_name   : CharField
+├── last_name    : CharField
+├── email        : EmailField
+├── address      : TextField
+├── created_at   : DateTimeField(auto_now_add=True)
+├── paid         : BooleanField(default=False)
+└── items        : OrderItem[]
+
+OrderItem
+├── order    : ForeignKey(Order)
+├── product  : ForeignKey(Product)
+├── price    : DecimalField  (snapshot at purchase time)
+└── quantity : PositiveIntegerField
 ```
 
-## 6. URL Structure
+## 5. URL Structure
 
-| URL Pattern | View | Name |
-|-------------|------|------|
-| `/` | HomeView | `home` |
-| `/items/` | ListView | `item-list` |
-| `/items/<pk>/` | DetailView | `item-detail` |
-| `/items/create/` | CreateView | `item-create` |
-| `/items/<pk>/edit/` | UpdateView | `item-update` |
-| `/items/<pk>/delete/` | DeleteView | `item-delete` |
+| URL | View | Name |
+|-----|------|------|
+| `/` | ProductListView | `store:product-list` |
+| `/category/<slug>/` | ProductListView (filtered) | `store:category` |
+| `/product/<slug>/` | ProductDetailView | `store:product-detail` |
+| `/cart/` | cart_view | `store:cart` |
+| `/cart/add/<pk>/` | cart_add | `store:cart-add` |
+| `/cart/remove/<pk>/` | cart_remove | `store:cart-remove` |
+| `/checkout/` | checkout_view | `store:checkout` |
+| `/orders/` | order_list | `store:order-list` |
+| `/orders/<pk>/` | order_detail | `store:order-detail` |
 
-## 7. Pages and Templates
+## 6. Acceptance Criteria
 
-- **Home** – Landing page with a brief introduction and call-to-action.
-- **List** – Paginated list of all items with search/filter.
-- **Detail** – Full view of a single item.
-- **Form** – Shared create/edit form with client-side validation.
-- **Delete confirmation** – Confirmation page before deleting.
+- [ ] Adding a product to the cart persists across page navigations (session)
+- [ ] Checkout creates an Order and OrderItem records
+- [ ] Stock is decremented on successful checkout
+- [ ] Admin can see all orders with their items
+- [ ] At least 10 tests pass
 
-## 8. Acceptance Criteria
+## 7. Out of Scope
 
-- [ ] All CRUD operations work correctly
-- [ ] Forms display validation errors inline
-- [ ] Django admin shows all models with search and filter
-- [ ] At least 10 unit/integration tests pass (`python manage.py test`)
-- [ ] No secrets are hard-coded; environment variables are used
-- [ ] `requirements.txt` lists all dependencies with pinned versions
-
-## 9. Out of Scope
-
-- Payment processing
-- Real-time features (WebSockets)
-- Third-party social authentication
+- Payment gateway integration (Stripe)
+- Email confirmation

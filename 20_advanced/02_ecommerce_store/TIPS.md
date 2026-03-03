@@ -1,234 +1,91 @@
 # Tips & Implementation Guide: E-Commerce Store
 
-**Level:** Advanced  
-**Project:** 02_ecommerce_store
+## 1. Session-Based Cart
 
----
-
-## 1. Architecture Overview
-
-Use the standard Django MTV (Model-Template-View) architecture:
-
-```
-02_ecommerce_store/
-├── manage.py
-├── config/                  # Project settings package
-│   ├── __init__.py
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-├── ecommerce_store/  # Main application
-│   ├── migrations/
-│   ├── templates/
-│   │   └── ecommerce_store/
-│   ├── static/
-│   ├── admin.py
-│   ├── apps.py
-│   ├── forms.py
-│   ├── models.py
-│   ├── tests.py
-│   ├── urls.py
-│   └── views.py
-├── templates/
-│   └── base.html
-├── requirements.txt
-└── .env.example
-```
-
-## 2. Recommended Frameworks & Libraries
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| Django | 4.2 LTS | Web framework |
-| django-crispy-forms | 2.x | Beautiful form rendering |
-| crispy-bootstrap5 | 2023.x | Bootstrap 5 template pack |
-| python-decouple | 3.x | Environment variable management |
-| Pillow | 10.x | Image handling (if needed) |
-| whitenoise | 6.x | Static file serving in production |
-
-Install with:
-```bash
-pip install django django-crispy-forms crispy-bootstrap5 python-decouple whitenoise Pillow
-pip freeze > requirements.txt
-```
-
-## 3. Models
+Store the cart in `request.session` as a dict mapping product IDs to quantities:
 
 ```python
-# models.py
-from django.db import models
-from django.contrib.auth.models import User
-from django.urls import reverse
+# cart.py
+class Cart:
+    def __init__(self, request):
+        self.session = request.session
+        cart = self.session.get('cart')
+        if cart is None:
+            cart = self.session['cart'] = {}
+        self.cart = cart
 
-class Item(models.Model):
-    title       = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    created_at  = models.DateTimeField(auto_now_add=True)
-    updated_at  = models.DateTimeField(auto_now=True)
-    author      = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='items'
-    )
+    def add(self, product, quantity=1):
+        pid = str(product.pk)
+        if pid not in self.cart:
+            self.cart[pid] = {'quantity': 0, 'price': str(product.price)}
+        self.cart[pid]['quantity'] += quantity
+        self.save()
 
-    class Meta:
-        ordering = ['-created_at']
+    def remove(self, product):
+        pid = str(product.pk)
+        if pid in self.cart:
+            del self.cart[pid]
+            self.save()
 
-    def __str__(self):
-        return self.title
+    def save(self):
+        self.session.modified = True
 
-    def get_absolute_url(self):
-        return reverse('item-detail', kwargs={'pk': self.pk})
+    def __len__(self):
+        return sum(item['quantity'] for item in self.cart.values())
+
+    @property
+    def total_price(self):
+        from decimal import Decimal
+        return sum(Decimal(i['price']) * i['quantity'] for i in self.cart.values())
 ```
 
-**Tips:**
-- Always define `__str__` and `get_absolute_url` on models.
-- Use `auto_now_add` for creation timestamps and `auto_now` for update timestamps.
-- Add `class Meta: ordering` to control default queryset ordering.
-
-## 4. Views
-
-Prefer **Class-Based Views** for CRUD:
+## 2. Models
 
 ```python
-# views.py
-from django.views.generic import (
-    ListView, DetailView, CreateView, UpdateView, DeleteView
-)
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
-from .models import Item
-
-class ItemListView(ListView):
-    model = Item
-    paginate_by = 10
-
-class ItemDetailView(DetailView):
-    model = Item
-
-class ItemCreateView(LoginRequiredMixin, CreateView):
-    model = Item
-    fields = ['title', 'description']
-
-    def form_valid(self, form):
-        form.instance.author = self.request.user
-        return super().form_valid(form)
-
-class ItemUpdateView(LoginRequiredMixin, UpdateView):
-    model = Item
-    fields = ['title', 'description']
-
-class ItemDeleteView(LoginRequiredMixin, DeleteView):
-    model = Item
-    success_url = reverse_lazy('item-list')
+class Product(models.Model):
+    category  = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
+    name      = models.CharField(max_length=200)
+    slug      = models.SlugField(unique=True)
+    price     = models.DecimalField(max_digits=8, decimal_places=2)
+    stock     = models.PositiveIntegerField(default=0)
+    available = models.BooleanField(default=True)
+    image     = models.ImageField(upload_to='products/', blank=True)
+    ...
 ```
 
-## 5. URL Configuration
+## 3. Checkout View
 
 ```python
-# urls.py (app-level)
-from django.urls import path
-from . import views
-
-app_name = 'items'
-
-urlpatterns = [
-    path('',               views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/',      views.ItemDetailView.as_view(), name='detail'),
-    path('create/',        views.ItemCreateView.as_view(), name='create'),
-    path('<int:pk>/edit/', views.ItemUpdateView.as_view(), name='update'),
-    path('<int:pk>/del/',  views.ItemDeleteView.as_view(), name='delete'),
-]
+def checkout_view(request):
+    cart = Cart(request)
+    if not cart:
+        return redirect('store:product-list')
+    if request.method == 'POST':
+        form = CheckoutForm(request.POST)
+        if form.is_valid():
+            order = form.save(commit=False)
+            if request.user.is_authenticated:
+                order.user = request.user
+            order.save()
+            for pid, item in cart.cart.items():
+                product = Product.objects.get(pk=pid)
+                OrderItem.objects.create(
+                    order=order, product=product,
+                    price=item['price'], quantity=item['quantity']
+                )
+                product.stock -= item['quantity']
+                product.save()
+            del request.session['cart']
+            return redirect('store:order-detail', pk=order.pk)
+    else:
+        form = CheckoutForm()
+    return render(request, 'ecommerce_store/checkout.html', {'cart': cart, 'form': form})
 ```
 
-## 6. Templates
-
-Use template inheritance to avoid repetition:
-
-```html
-<!-- templates/base.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{% block title %}Django App{% endblock %}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/css/bootstrap.min.css">
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <!-- navigation here -->
-    </nav>
-    <main class="container mt-4">
-        {% block content %}{% endblock %}
-    </main>
-</body>
-</html>
-```
-
-## 7. Forms
-
-```python
-# forms.py
-from django import forms
-from .models import Item
-
-class ItemForm(forms.ModelForm):
-    class Meta:
-        model = Item
-        fields = ['title', 'description']
-        widgets = {
-            'description': forms.Textarea(attrs={'rows': 4}),
-        }
-
-    def clean_title(self):
-        title = self.cleaned_data['title']
-        if len(title) < 3:
-            raise forms.ValidationError('Title must be at least 3 characters.')
-        return title
-```
-
-## 8. Settings Tips
-
-```python
-# Use python-decouple for environment variables
-from decouple import config
-
-SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-```
-
-## 9. Testing Tips
-
-```python
-# tests.py
-from django.test import TestCase, Client
-from django.contrib.auth.models import User
-from .models import Item
-
-class ItemModelTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user('testuser', password='pass123')
-        self.item = Item.objects.create(
-            title='Test Item', author=self.user
-        )
-
-    def test_str(self):
-        self.assertEqual(str(self.item), 'Test Item')
-
-    def test_absolute_url(self):
-        self.assertIn(str(self.item.pk), self.item.get_absolute_url())
-```
-
-## 10. Common Pitfalls
+## 4. Common Pitfalls
 
 | Pitfall | Solution |
 |---------|---------|
-| `SECRET_KEY` committed to git | Use `.env` + `python-decouple` |
-| Missing `{% csrf_token %}` | Always add to POST forms |
-| N+1 query problem | Use `select_related()` / `prefetch_related()` |
-| Hard-coded URLs in templates | Use `{% url 'name' %}` template tag |
-| DEBUG=True in production | Use environment variables |
+| Forgetting `session.modified = True` | Always call `cart.save()` after mutations |
+| Not snapshotting price | Store price at order time, not a FK |
+| Stock going negative | Wrap stock decrement in `select_for_update()` |

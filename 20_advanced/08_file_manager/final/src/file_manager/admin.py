@@ -1,8 +1,13 @@
 from django.contrib import admin
-from .models import Item
+from .models import Folder, UploadedFile
 
-@admin.register(Item)
-class ItemAdmin(admin.ModelAdmin):
-    list_display  = ('title', 'author', 'created_at')
-    list_filter   = ('author',)
-    search_fields = ('title', 'description')
+
+@admin.register(Folder)
+class FolderAdmin(admin.ModelAdmin):
+    list_display = ('name', 'owner', 'parent', 'created_at')
+
+
+@admin.register(UploadedFile)
+class UploadedFileAdmin(admin.ModelAdmin):
+    list_display = ('original_name', 'owner', 'folder', 'size', 'uploaded_at')
+    list_filter  = ('owner',)

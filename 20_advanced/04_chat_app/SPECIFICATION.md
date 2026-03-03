@@ -1,91 +1,71 @@
-# Specification: Real-Time Chat
+# Specification: Real-Time Chat Application
 
 **Level:** Advanced  
 **Project:** 04_chat_app  
-**Description:** WebSocket-based chat using Django Channels
+**Description:** WebSocket-based real-time chat using Django Channels
 
 ---
 
 ## 1. Overview
 
-WebSocket-based chat using Django Channels. This project teaches fundamental Django concepts appropriate for the **advanced** level including models, views, templates, forms and URL routing.
+Build a multi-room real-time chat application using Django Channels and WebSockets.
+Users can create and join rooms, send messages that appear instantly for all participants,
+and see an online-users indicator.
 
 ## 2. Goals
 
-- Understand the Django request/response cycle
-- Create and apply database models with Django ORM
-- Build HTML templates using the Django template language
-- Handle user input through Django forms
-- Write clean, testable Django code
+- Set up Django Channels with an ASGI server (Daphne / Uvicorn)
+- Implement a WebSocket consumer that broadcasts messages to a channel group
+- Store chat rooms and message history in the database
+- Serve the chat UI with HTMX or vanilla JavaScript WebSocket API
 
 ## 3. Functional Requirements
 
-### 3.1 Core Features
-
 | # | Feature | Priority |
 |---|---------|----------|
-| 1 | Display a home page | Must |
-| 2 | List and detail views for the main entity | Must |
-| 3 | Create / Edit / Delete (CRUD) operations | Must |
-| 4 | Basic user authentication (login/logout) | Should |
-| 5 | Input validation and error messages | Should |
-| 6 | Responsive HTML layout | Could |
+| 1 | List of chat rooms | Must |
+| 2 | Create a new room | Must |
+| 3 | Join a room and receive real-time messages | Must |
+| 4 | Send a message that all room members see | Must |
+| 5 | Persist messages in the database | Must |
+| 6 | Display last 50 messages on join | Should |
+| 7 | Show online user count | Should |
+| 8 | Private (direct) messages | Could |
 
-### 3.2 User Stories
-
-- **As a visitor**, I want to browse the main content so that I can find what I need.
-- **As a registered user**, I want to create and manage my own entries.
-- **As an admin**, I want to manage all content through the Django admin interface.
-
-## 4. Non-Functional Requirements
-
-- The application must run on Django 4.2+ with Python 3.11+
-- Pages must load within 2 seconds on a local development server
-- All forms must validate input and display meaningful error messages
-- Code must follow PEP 8 style guidelines
-
-## 5. Data Model
+## 4. Data Model
 
 ```
-Entity
-├── id          : AutoField (primary key)
-├── title       : CharField(max_length=200)
-├── description : TextField(blank=True)
-├── created_at  : DateTimeField(auto_now_add=True)
-├── updated_at  : DateTimeField(auto_now=True)
-└── author      : ForeignKey(User, on_delete=CASCADE)
+Room
+├── id      : AutoField
+├── name    : CharField(max_length=100, unique=True)
+├── slug    : SlugField(unique=True)
+└── created_at : DateTimeField(auto_now_add=True)
+
+Message
+├── id         : AutoField
+├── room       : ForeignKey(Room, related_name='messages')
+├── author     : ForeignKey(User)
+├── content    : TextField
+└── timestamp  : DateTimeField(auto_now_add=True)
 ```
 
-## 6. URL Structure
+## 5. URL Structure
 
-| URL Pattern | View | Name |
-|-------------|------|------|
-| `/` | HomeView | `home` |
-| `/items/` | ListView | `item-list` |
-| `/items/<pk>/` | DetailView | `item-detail` |
-| `/items/create/` | CreateView | `item-create` |
-| `/items/<pk>/edit/` | UpdateView | `item-update` |
-| `/items/<pk>/delete/` | DeleteView | `item-delete` |
+| URL | View | Name |
+|-----|------|------|
+| `/` | RoomListView | `chat:list` |
+| `/room/<slug>/` | room_view | `chat:room` |
+| `/ws/chat/<slug>/` | ChatConsumer (WebSocket) | — |
 
-## 7. Pages and Templates
+## 6. Acceptance Criteria
 
-- **Home** – Landing page with a brief introduction and call-to-action.
-- **List** – Paginated list of all items with search/filter.
-- **Detail** – Full view of a single item.
-- **Form** – Shared create/edit form with client-side validation.
-- **Delete confirmation** – Confirmation page before deleting.
+- [ ] WebSocket connection established on room page
+- [ ] Messages broadcast to all connected clients in the room
+- [ ] Messages persisted and shown on reconnect (last 50)
+- [ ] Login required to join a room
+- [ ] At least 8 tests pass (sync HTTP tests + async consumer tests)
 
-## 8. Acceptance Criteria
+## 7. Out of Scope
 
-- [ ] All CRUD operations work correctly
-- [ ] Forms display validation errors inline
-- [ ] Django admin shows all models with search and filter
-- [ ] At least 10 unit/integration tests pass (`python manage.py test`)
-- [ ] No secrets are hard-coded; environment variables are used
-- [ ] `requirements.txt` lists all dependencies with pinned versions
-
-## 9. Out of Scope
-
-- Payment processing
-- Real-time features (WebSockets)
-- Third-party social authentication
+- End-to-end encryption
+- File attachments in chat

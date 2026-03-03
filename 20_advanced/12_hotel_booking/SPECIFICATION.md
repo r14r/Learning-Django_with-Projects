@@ -1,4 +1,4 @@
-# Specification: Hotel Booking
+# Specification: Hotel Booking System
 
 **Level:** Advanced  
 **Project:** 12_hotel_booking  
@@ -8,84 +8,69 @@
 
 ## 1. Overview
 
-Room availability check and reservation system. This project teaches fundamental Django concepts appropriate for the **advanced** level including models, views, templates, forms and URL routing.
+Build a hotel booking system where administrators manage rooms and guests can
+search availability, make reservations, and view their booking history.
 
 ## 2. Goals
 
-- Understand the Django request/response cycle
-- Create and apply database models with Django ORM
-- Build HTML templates using the Django template language
-- Handle user input through Django forms
-- Write clean, testable Django code
+- Model rooms with type (single, double, suite), capacity and price per night
+- Check availability (no overlapping confirmed bookings)
+- Calculate total cost based on check-in / check-out dates
+- Send booking confirmation (simulated via console email backend)
 
 ## 3. Functional Requirements
 
-### 3.1 Core Features
-
 | # | Feature | Priority |
 |---|---------|----------|
-| 1 | Display a home page | Must |
-| 2 | List and detail views for the main entity | Must |
-| 3 | Create / Edit / Delete (CRUD) operations | Must |
-| 4 | Basic user authentication (login/logout) | Should |
-| 5 | Input validation and error messages | Should |
-| 6 | Responsive HTML layout | Could |
+| 1 | List available rooms for a date range | Must |
+| 2 | Room detail page with photos and amenities | Must |
+| 3 | Book a room (requires login) | Must |
+| 4 | Booking confirmation page | Must |
+| 5 | Guest dashboard: view / cancel bookings | Must |
+| 6 | Admin: manage rooms and all bookings | Should |
+| 7 | Reviews for completed stays | Could |
 
-### 3.2 User Stories
-
-- **As a visitor**, I want to browse the main content so that I can find what I need.
-- **As a registered user**, I want to create and manage my own entries.
-- **As an admin**, I want to manage all content through the Django admin interface.
-
-## 4. Non-Functional Requirements
-
-- The application must run on Django 4.2+ with Python 3.11+
-- Pages must load within 2 seconds on a local development server
-- All forms must validate input and display meaningful error messages
-- Code must follow PEP 8 style guidelines
-
-## 5. Data Model
+## 4. Data Model
 
 ```
-Entity
-├── id          : AutoField (primary key)
-├── title       : CharField(max_length=200)
-├── description : TextField(blank=True)
-├── created_at  : DateTimeField(auto_now_add=True)
-├── updated_at  : DateTimeField(auto_now=True)
-└── author      : ForeignKey(User, on_delete=CASCADE)
+RoomType: single | double | suite | deluxe
+
+Room
+├── id          : AutoField
+├── number      : CharField(max_length=10, unique=True)
+├── room_type   : CharField(choices=RoomType)
+├── capacity    : PositiveIntegerField
+├── price_night : DecimalField
+├── description : TextField
+├── amenities   : TextField (comma-separated)
+├── image       : ImageField
+└── available   : BooleanField(default=True)
+
+Booking
+├── id          : AutoField
+├── room        : ForeignKey(Room)
+├── guest       : ForeignKey(User)
+├── check_in    : DateField
+├── check_out   : DateField
+├── guests      : PositiveIntegerField
+├── total_price : DecimalField
+├── status      : CharField choices=[pending, confirmed, cancelled]
+└── created_at  : DateTimeField(auto_now_add=True)
 ```
 
-## 6. URL Structure
+## 5. URL Structure
 
-| URL Pattern | View | Name |
-|-------------|------|------|
-| `/` | HomeView | `home` |
-| `/items/` | ListView | `item-list` |
-| `/items/<pk>/` | DetailView | `item-detail` |
-| `/items/create/` | CreateView | `item-create` |
-| `/items/<pk>/edit/` | UpdateView | `item-update` |
-| `/items/<pk>/delete/` | DeleteView | `item-delete` |
+| URL | View | Name |
+|-----|------|------|
+| `/` | RoomListView | `hotel_booking:list` |
+| `/room/<pk>/` | RoomDetailView | `hotel_booking:room-detail` |
+| `/book/<pk>/` | book_view | `hotel_booking:book` |
+| `/bookings/` | GuestDashboard | `hotel_booking:my-bookings` |
+| `/bookings/<pk>/cancel/` | cancel_booking | `hotel_booking:cancel` |
 
-## 7. Pages and Templates
+## 6. Acceptance Criteria
 
-- **Home** – Landing page with a brief introduction and call-to-action.
-- **List** – Paginated list of all items with search/filter.
-- **Detail** – Full view of a single item.
-- **Form** – Shared create/edit form with client-side validation.
-- **Delete confirmation** – Confirmation page before deleting.
-
-## 8. Acceptance Criteria
-
-- [ ] All CRUD operations work correctly
-- [ ] Forms display validation errors inline
-- [ ] Django admin shows all models with search and filter
-- [ ] At least 10 unit/integration tests pass (`python manage.py test`)
-- [ ] No secrets are hard-coded; environment variables are used
-- [ ] `requirements.txt` lists all dependencies with pinned versions
-
-## 9. Out of Scope
-
-- Payment processing
-- Real-time features (WebSockets)
-- Third-party social authentication
+- [ ] Availability check prevents double-booking
+- [ ] Total price computed: nights × price_per_night
+- [ ] Guest can cancel pending/confirmed bookings
+- [ ] At least 10 tests pass

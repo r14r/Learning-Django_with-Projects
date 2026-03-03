@@ -1,46 +1,46 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
-from .models import Item
+from django.core import mail
+from .models import Subscriber, Campaign
 
-class ItemTests(TestCase):
+
+class NewsletterTests(TestCase):
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(
-            username='tester', password='secret123'
-        )
-        self.item = Item.objects.create(
-            title='Test Item',
-            description='A test item',
-            author=self.user,
-        )
+        self.client_http = Client()
+        self.user        = User.objects.create_user('admin', password='pass')
+        self.sub         = Subscriber.objects.create(email='alice@example.com', confirmed=True)
 
-    def test_list_view(self):
-        resp = self.client.get(reverse('newsletter_system:list'))
-        self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Test Item')
+    def test_subscribe(self):
+        resp = self.client_http.post(reverse('newsletter_system:subscribe'), {
+            'email': 'new@example.com', 'name': 'Bob'
+        })
+        self.assertEqual(Subscriber.objects.filter(email='new@example.com').count(), 1)
+        self.assertEqual(len(mail.outbox), 1)
 
-    def test_detail_view(self):
-        resp = self.client.get(
-            reverse('newsletter_system:detail', kwargs={'pk': self.item.pk})
+    def test_confirm_subscription(self):
+        sub = Subscriber.objects.create(email='confirm@example.com')
+        resp = self.client_http.get(
+            reverse('newsletter_system:confirm', kwargs={'token': sub.token})
         )
-        self.assertEqual(resp.status_code, 200)
+        sub.refresh_from_db()
+        self.assertTrue(sub.confirmed)
 
-    def test_create_requires_login(self):
-        resp = self.client.get(reverse('newsletter_system:create'))
-        self.assertNotEqual(resp.status_code, 200)
-
-    def test_create_item(self):
-        self.client.login(username='tester', password='secret123')
-        resp = self.client.post(
-            reverse('newsletter_system:create'),
-            {'title': 'New Item', 'description': 'Created in test'},
+    def test_unsubscribe(self):
+        resp = self.client_http.get(
+            reverse('newsletter_system:unsubscribe', kwargs={'token': self.sub.token})
         )
-        self.assertEqual(Item.objects.count(), 2)
+        self.sub.refresh_from_db()
+        self.assertFalse(self.sub.confirmed)
 
-    def test_delete_item(self):
-        self.client.login(username='tester', password='secret123')
-        self.client.post(
-            reverse('newsletter_system:delete', kwargs={'pk': self.item.pk})
+    def test_send_campaign(self):
+        self.client_http.login(username='admin', password='pass')
+        campaign = Campaign.objects.create(
+            owner=self.user, subject='Test Campaign', body_text='Hello!'
         )
-        self.assertEqual(Item.objects.count(), 0)
+        self.client_http.post(
+            reverse('newsletter_system:send', kwargs={'pk': campaign.pk})
+        )
+        campaign.refresh_from_db()
+        self.assertIsNotNone(campaign.sent_at)
+        self.assertEqual(len(mail.outbox), 1)  # 1 confirmed subscriber

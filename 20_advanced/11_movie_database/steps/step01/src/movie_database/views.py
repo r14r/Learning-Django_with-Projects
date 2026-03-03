@@ -1,4 +1,4 @@
 from django.http import HttpResponse
 
 def home(request):
-    return HttpResponse('<h1>Welcome to Movie Database!</h1>')
+    return HttpResponse('<h1>Movie Database</h1>')

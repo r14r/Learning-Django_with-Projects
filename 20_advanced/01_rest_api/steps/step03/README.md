@@ -1,78 +1,72 @@
-# Step 3 – Templates & List / Detail Views
+# Step 3 – Serializers & Read-Only Endpoints
 
 ## What you'll add
-HTML templates with Bootstrap 5 and class-based list / detail views.
+DRF serializers and read-only list/detail endpoints via `ModelViewSet`.
 
-## Directory structure
+## rest_api/serializers.py
 
-```
-rest_api/
-└── templates/
-    └── rest_api/
-        ├── base.html
-        ├── item_list.html
-        └── item_detail.html
-```
+```python
+from rest_framework import serializers
+from .models import Author, Book, Review
 
-## templates/base.html
 
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{% block title %}REST API with DRF{% endblock %}</title>
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/css/bootstrap.min.css">
-</head>
-<body>
-<nav class="navbar navbar-dark bg-dark px-3">
-    <a class="navbar-brand" href="/">REST API with DRF</a>
-</nav>
-<div class="container mt-4">
-    {% block content %}{% endblock %}
-</div>
-</body>
-</html>
+class AuthorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = Author
+        fields = ['id', 'name', 'bio', 'created_at']
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.ReadOnlyField(source='author.username')
+
+    class Meta:
+        model  = Review
+        fields = ['id', 'author', 'rating', 'body', 'created_at']
+
+
+class BookSerializer(serializers.ModelSerializer):
+    author_name = serializers.ReadOnlyField(source='author.name')
+    reviews     = ReviewSerializer(many=True, read_only=True)
+    owner       = serializers.ReadOnlyField(source='owner.username')
+
+    class Meta:
+        model  = Book
+        fields = [
+            'id', 'title', 'author', 'author_name', 'genre',
+            'published', 'description', 'owner', 'reviews', 'created_at',
+        ]
 ```
 
 ## rest_api/views.py
 
 ```python
-from django.views.generic import ListView, DetailView
-from .models import Item
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from .models import Author, Book
+from .serializers import AuthorSerializer, BookSerializer
 
-class ItemListView(ListView):
-    model        = Item
-    paginate_by  = 10
-    # template: rest_api/item_list.html
 
-class ItemDetailView(DetailView):
-    model = Item
-    # template: rest_api/item_detail.html
-```
+class AuthorViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset         = Author.objects.all()
+    serializer_class = AuthorSerializer
 
-## config/urls.py
 
-```python
-from django.contrib import admin
-from django.urls import path, include
-
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('',       include('rest_api.urls')),
-]
+class BookViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset         = Book.objects.select_related('author', 'owner').prefetch_related('reviews')
+    serializer_class = BookSerializer
+    search_fields    = ['title', 'author__name']
+    filterset_fields = ['genre', 'published']
 ```
 
 ## rest_api/urls.py
 
 ```python
-from django.urls import path
+from rest_framework.routers import DefaultRouter
 from . import views
 
-app_name = 'rest_api'
-urlpatterns = [
-    path('',          views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/', views.ItemDetailView.as_view(), name='detail'),
-]
+router = DefaultRouter()
+router.register('authors', views.AuthorViewSet)
+router.register('books',   views.BookViewSet)
+
+urlpatterns = router.urls
 ```
