@@ -3,9 +3,10 @@ from . import views
 
 app_name = 'todo_list'
 urlpatterns = [
-    path('',               views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/',      views.ItemDetailView.as_view(), name='detail'),
-    path('create/',        views.ItemCreateView.as_view(), name='create'),
-    path('<int:pk>/edit/', views.ItemUpdateView.as_view(), name='update'),
-    path('<int:pk>/del/',  views.ItemDeleteView.as_view(), name='delete'),
+    path('',               views.TodoListView.as_view(),   name='list'),
+    path('<int:pk>/',      views.TodoDetailView.as_view(), name='detail'),
+    path('create/',        views.TodoCreateView.as_view(), name='create'),
+    path('<int:pk>/edit/', views.TodoUpdateView.as_view(), name='update'),
+    path('<int:pk>/del/',  views.TodoDeleteView.as_view(), name='delete'),
+    path('<int:pk>/toggle/', views.toggle_done,            name='toggle'),
 ]

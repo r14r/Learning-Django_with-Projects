@@ -1,12 +1,20 @@
 {% extends "base.html" %}
-{% block title %}{{ object.title }}{% endblock %}
+{% block title %}Calculation History{% endblock %}
 {% block content %}
-<h1>{{ object.title }}</h1>
-<p class="text-muted">By {{ object.author }} on {{ object.created_at|date:"Y-m-d" }}</p>
-<p>{{ object.description }}</p>
-{% if user == object.author %}
-<a href="{% url 'web_calculator:update' object.pk %}" class="btn btn-secondary">Edit</a>
-<a href="{% url 'web_calculator:delete' object.pk %}" class="btn btn-danger">Delete</a>
-{% endif %}
-<a href="{% url 'web_calculator:list' %}" class="btn btn-outline-secondary">Back</a>
+<h1>Calculation History</h1>
+<table class="table table-striped">
+  <thead><tr><th>Expression</th><th>Result</th><th>Date</th></tr></thead>
+  <tbody>
+  {% for calc in object_list %}
+  <tr>
+    <td>{{ calc.expression }}</td>
+    <td><strong>{{ calc.result }}</strong></td>
+    <td>{{ calc.created_at|date:"Y-m-d H:i" }}</td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="3" class="text-muted">No calculations yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+<a href="{% url 'web_calculator:list' %}" class="btn btn-outline-secondary">Back to Calculator</a>
 {% endblock %}

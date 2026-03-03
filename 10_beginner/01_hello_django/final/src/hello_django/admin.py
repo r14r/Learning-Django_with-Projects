@@ -1,8 +1,9 @@
 from django.contrib import admin
-from .models import Item
+from .models import Message
 
-@admin.register(Item)
-class ItemAdmin(admin.ModelAdmin):
+
+@admin.register(Message)
+class MessageAdmin(admin.ModelAdmin):
     list_display  = ('title', 'author', 'created_at')
     list_filter   = ('author',)
-    search_fields = ('title', 'description')
+    search_fields = ('title', 'body')

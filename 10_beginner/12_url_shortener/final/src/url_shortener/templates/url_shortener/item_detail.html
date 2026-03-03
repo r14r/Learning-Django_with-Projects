@@ -1,12 +1,36 @@
 {% extends "base.html" %}
-{% block title %}{{ object.title }}{% endblock %}
+{% block title %}My URLs{% endblock %}
 {% block content %}
-<h1>{{ object.title }}</h1>
-<p class="text-muted">By {{ object.author }} on {{ object.created_at|date:"Y-m-d" }}</p>
-<p>{{ object.description }}</p>
-{% if user == object.author %}
-<a href="{% url 'url_shortener:update' object.pk %}" class="btn btn-secondary">Edit</a>
-<a href="{% url 'url_shortener:delete' object.pk %}" class="btn btn-danger">Delete</a>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1>My URLs</h1>
+  <a href="{% url 'url_shortener:list' %}" class="btn btn-primary">+ Shorten New URL</a>
+</div>
+{% if urls %}
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Short Code</th>
+      <th>Original URL</th>
+      <th>Clicks</th>
+      <th>Created</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for url in urls %}
+    <tr>
+      <td><a href="{% url 'url_shortener:redirect' url.short_code %}">{{ url.short_code }}</a></td>
+      <td><a href="{{ url.original_url }}" target="_blank">{{ url.original_url|truncatechars:60 }}</a></td>
+      <td>{{ url.clicks }}</td>
+      <td>{{ url.created_at|date:"Y-m-d" }}</td>
+      <td>
+        <a href="{% url 'url_shortener:delete' url.pk %}" class="btn btn-sm btn-danger">Delete</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="text-muted">No shortened URLs yet.</p>
 {% endif %}
-<a href="{% url 'url_shortener:list' %}" class="btn btn-outline-secondary">Back</a>
 {% endblock %}

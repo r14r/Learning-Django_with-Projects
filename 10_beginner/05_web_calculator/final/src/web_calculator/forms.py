@@ -1,11 +1,12 @@
 from django import forms
-from .models import Item
 
-class ItemForm(forms.ModelForm):
-    class Meta:
-        model  = Item
-        fields = ['title', 'description']
-        widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'title':       forms.TextInput(attrs={'class': 'form-control'}),
-        }
+
+class CalculatorForm(forms.Form):
+    expression = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class':       'form-control form-control-lg',
+            'placeholder': 'e.g. 2 + 3 * (4 - 1)',
+            'autofocus':   True,
+        })
+    )

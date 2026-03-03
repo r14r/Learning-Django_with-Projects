@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block title %}{% if object %}Edit{% else %}New{% endif %} Item{% endblock %}
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} Course{% endblock %}
 {% block content %}
-<h1>{% if object %}Edit Item{% else %}New Item{% endif %}</h1>
+<h1>{% if course %}Add Grade to {{ course.name }}{% elif object %}Edit Course{% else %}Add Course{% endif %}</h1>
 <form method="post">
   {% csrf_token %}
   {{ form.as_p }}

@@ -1,11 +1,14 @@
 from django import forms
-from .models import Item
+from .models import Note
 
-class ItemForm(forms.ModelForm):
+
+class NoteForm(forms.ModelForm):
     class Meta:
-        model  = Item
-        fields = ['title', 'description']
+        model = Note
+        fields = ['title', 'content', 'color', 'pinned']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'title':       forms.TextInput(attrs={'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'content': forms.Textarea(attrs={'rows': 6, 'class': 'form-control'}),
+            'color': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}),
+            'pinned': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

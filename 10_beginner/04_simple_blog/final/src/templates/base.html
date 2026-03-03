@@ -9,6 +9,14 @@
 <body>
 <nav class="navbar navbar-dark bg-dark px-3">
     <a class="navbar-brand" href="/">Simple Blog</a>
+    <div>
+    {% if user.is_authenticated %}
+      <span class="text-light me-3">{{ user.username }}</span>
+      <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Logout</a>
+    {% else %}
+      <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">Login</a>
+    {% endif %}
+    </div>
 </nav>
 <div class="container mt-4">
     {% block content %}{% endblock %}

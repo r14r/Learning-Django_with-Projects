@@ -8,7 +8,11 @@
 </head>
 <body>
 <nav class="navbar navbar-dark bg-dark px-3">
-    <a class="navbar-brand" href="/">Temperature Converter</a>
+    <a class="navbar-brand" href="/">🌡️ Temperature Converter</a>
+    <div class="d-flex gap-2">
+      <a href="{% url 'temperature_converter:list' %}" class="btn btn-outline-light btn-sm">Convert</a>
+      <a href="{% url 'temperature_converter:detail' %}" class="btn btn-outline-light btn-sm">History</a>
+    </div>
 </nav>
 <div class="container mt-4">
     {% block content %}{% endblock %}

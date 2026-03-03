@@ -2,11 +2,11 @@
 {% block title %}{{ object.title }}{% endblock %}
 {% block content %}
 <h1>{{ object.title }}</h1>
-<p class="text-muted">By {{ object.author }} on {{ object.created_at|date:"Y-m-d" }}</p>
+<span class="badge bg-{% if object.priority == 'high' %}danger{% elif object.priority == 'medium' %}warning text-dark{% else %}info{% endif %}">{{ object.priority }}</span>
+{% if object.is_done %}<span class="badge bg-success ms-2">Done</span>{% endif %}
+{% if object.due_date %}<p class="mt-2 text-muted">Due: {{ object.due_date }}</p>{% endif %}
 <p>{{ object.description }}</p>
-{% if user == object.author %}
 <a href="{% url 'todo_list:update' object.pk %}" class="btn btn-secondary">Edit</a>
 <a href="{% url 'todo_list:delete' object.pk %}" class="btn btn-danger">Delete</a>
-{% endif %}
 <a href="{% url 'todo_list:list' %}" class="btn btn-outline-secondary">Back</a>
 {% endblock %}

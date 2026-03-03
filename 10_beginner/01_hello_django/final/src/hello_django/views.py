@@ -1,24 +1,26 @@
-from django.views.generic import (
-    ListView, DetailView, CreateView, UpdateView, DeleteView,
-)
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
-from .models import Item
-from .forms import ItemForm
+from .models import Message
+from .forms import MessageForm
 
 
-class ItemListView(ListView):
-    model       = Item
+class MessageListView(ListView):
+    model       = Message
     paginate_by = 10
+    template_name = 'hello_django/item_list.html'
+    context_object_name = 'object_list'
 
 
-class ItemDetailView(DetailView):
-    model = Item
+class MessageDetailView(DetailView):
+    model = Message
+    template_name = 'hello_django/item_detail.html'
 
 
-class ItemCreateView(LoginRequiredMixin, CreateView):
-    model       = Item
-    form_class  = ItemForm
+class MessageCreateView(LoginRequiredMixin, CreateView):
+    model      = Message
+    form_class = MessageForm
+    template_name = 'hello_django/item_form.html'
     success_url = reverse_lazy('hello_django:list')
 
     def form_valid(self, form):
@@ -26,12 +28,14 @@ class ItemCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class ItemUpdateView(LoginRequiredMixin, UpdateView):
-    model       = Item
-    form_class  = ItemForm
+class MessageUpdateView(LoginRequiredMixin, UpdateView):
+    model      = Message
+    form_class = MessageForm
+    template_name = 'hello_django/item_form.html'
     success_url = reverse_lazy('hello_django:list')
 
 
-class ItemDeleteView(LoginRequiredMixin, DeleteView):
-    model       = Item
+class MessageDeleteView(LoginRequiredMixin, DeleteView):
+    model       = Message
+    template_name = 'hello_django/item_confirm_delete.html'
     success_url = reverse_lazy('hello_django:list')

@@ -1,35 +1,53 @@
 {% extends "base.html" %}
-{% block title %}Temperature Converter – Items{% endblock %}
+{% block title %}Temperature Converter{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h1>Items</h1>
-  {% if user.is_authenticated %}
-  <a href="{% url 'temperature_converter:create' %}" class="btn btn-primary">+ New Item</a>
-  {% endif %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <h1 class="mb-4">🌡️ Temperature Converter</h1>
+    <form method="post" class="card p-4 shadow-sm">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label fw-bold">{{ form.value_in.label }}</label>
+        {{ form.value_in }}
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col">
+          <label class="form-label fw-bold">{{ form.unit_in.label }}</label>
+          {{ form.unit_in }}
+        </div>
+        <div class="col-auto d-flex align-items-end pb-1">→</div>
+        <div class="col">
+          <label class="form-label fw-bold">{{ form.unit_out.label }}</label>
+          {{ form.unit_out }}
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Convert</button>
+    </form>
+
+    {% if result %}
+    <div class="alert alert-success mt-4 text-center fs-4">
+      {{ result.value_in }} {{ result.get_unit_in_display }}
+      = <strong>{{ result.value_out }} {{ result.get_unit_out_display }}</strong>
+    </div>
+    {% endif %}
+  </div>
 </div>
-{% if object_list %}
-<ul class="list-group">
-  {% for item in object_list %}
-  <li class="list-group-item d-flex justify-content-between align-items-center">
-    <a href="{% url 'temperature_converter:detail' item.pk %}">{{ item.title }}</a>
-    <small class="text-muted">{{ item.created_at|date:"Y-m-d" }}</small>
-  </li>
-  {% endfor %}
-</ul>
-{% if is_paginated %}
-<nav class="mt-3">
-  <ul class="pagination">
-    {% if page_obj.has_previous %}
-    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
-    {% endif %}
-    <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
-    {% if page_obj.has_next %}
-    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
-    {% endif %}
-  </ul>
-</nav>
-{% endif %}
-{% else %}
-<p class="text-muted">No items yet.</p>
+
+{% if recent %}
+<div class="mt-5">
+  <h4>Recent Conversions <a href="{% url 'temperature_converter:detail' %}" class="btn btn-sm btn-outline-secondary ms-2">View All</a></h4>
+  <table class="table table-sm table-hover mt-2">
+    <thead><tr><th>Input</th><th>Output</th><th>When</th></tr></thead>
+    <tbody>
+      {% for c in recent %}
+      <tr>
+        <td>{{ c.value_in }} {{ c.get_unit_in_display }}</td>
+        <td>{{ c.value_out }} {{ c.get_unit_out_display }}</td>
+        <td class="text-muted">{{ c.created_at|date:"Y-m-d H:i" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% endif %}
 {% endblock %}

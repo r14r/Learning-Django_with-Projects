@@ -1,46 +1,51 @@
 from django.test import TestCase, Client
-from django.contrib.auth.models import User
 from django.urls import reverse
-from .models import Item
+from django.contrib.auth.models import User
+from .models import Book
 
-class ItemTests(TestCase):
+
+class BookLibraryTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(
-            username='tester', password='secret123'
-        )
-        self.item = Item.objects.create(
-            title='Test Item',
-            description='A test item',
-            author=self.user,
+        self.user = User.objects.create_user(username='tester', password='secret123')
+        self.book = Book.objects.create(
+            title='Test Book',
+            author_name='Test Author',
+            genre='Fiction',
         )
 
     def test_list_view(self):
         resp = self.client.get(reverse('book_library:list'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Test Item')
+        self.assertContains(resp, 'Test Book')
 
     def test_detail_view(self):
-        resp = self.client.get(
-            reverse('book_library:detail', kwargs={'pk': self.item.pk})
-        )
+        resp = self.client.get(reverse('book_library:detail', kwargs={'pk': self.book.pk}))
         self.assertEqual(resp.status_code, 200)
 
     def test_create_requires_login(self):
         resp = self.client.get(reverse('book_library:create'))
         self.assertNotEqual(resp.status_code, 200)
 
-    def test_create_item(self):
+    def test_create_book(self):
         self.client.login(username='tester', password='secret123')
-        resp = self.client.post(
-            reverse('book_library:create'),
-            {'title': 'New Item', 'description': 'Created in test'},
-        )
-        self.assertEqual(Item.objects.count(), 2)
+        resp = self.client.post(reverse('book_library:create'), {
+            'title': 'New Book',
+            'author_name': 'New Author',
+            'isbn': '',
+            'genre': 'Sci-Fi',
+            'published_year': 2024,
+            'description': 'A great book',
+            'available': True,
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(Book.objects.count(), 2)
 
-    def test_delete_item(self):
-        self.client.login(username='tester', password='secret123')
-        self.client.post(
-            reverse('book_library:delete', kwargs={'pk': self.item.pk})
+    def test_genre_filter(self):
+        Book.objects.create(
+            title='Another Book', author_name='Author 2', genre='Non-Fiction'
         )
-        self.assertEqual(Item.objects.count(), 0)
+        resp = self.client.get(reverse('book_library:list') + '?genre=Fiction')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Test Book')
+        self.assertNotContains(resp, 'Another Book')

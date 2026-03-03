@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}{% if object %}Edit{% else %}New{% endif %} Item{% endblock %}
+{% block title %}{% if object %}Edit{% else %}New{% endif %} Post{% endblock %}
 {% block content %}
-<h1>{% if object %}Edit Item{% else %}New Item{% endif %}</h1>
+<h1>{% if object %}Edit Post{% else %}New Post{% endif %}</h1>
 <form method="post">
   {% csrf_token %}
   {{ form.as_p }}
-  <button type="submit" class="btn btn-primary">Save</button>
+  <button type="submit" class="btn btn-primary">Publish</button>
   <a href="{% url 'simple_blog:list' %}" class="btn btn-outline-secondary">Cancel</a>
 </form>
 {% endblock %}

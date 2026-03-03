@@ -1,12 +1,33 @@
 {% extends "base.html" %}
-{% block title %}{{ object.title }}{% endblock %}
+{% block title %}{{ book.title }}{% endblock %}
 {% block content %}
-<h1>{{ object.title }}</h1>
-<p class="text-muted">By {{ object.author }} on {{ object.created_at|date:"Y-m-d" }}</p>
-<p>{{ object.description }}</p>
-{% if user == object.author %}
-<a href="{% url 'book_library:update' object.pk %}" class="btn btn-secondary">Edit</a>
-<a href="{% url 'book_library:delete' object.pk %}" class="btn btn-danger">Delete</a>
-{% endif %}
-<a href="{% url 'book_library:list' %}" class="btn btn-outline-secondary">Back</a>
+<div class="row">
+  <div class="col-md-3">
+    {% if book.cover %}
+    <img src="{{ book.cover.url }}" class="img-fluid rounded shadow" alt="Cover">
+    {% else %}
+    <div class="bg-secondary rounded d-flex align-items-center justify-content-center" style="height:300px;">
+      <span class="text-white" style="font-size:4rem;">📖</span>
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-md-9">
+    <h1>{{ book.title }}</h1>
+    <p class="lead text-muted">by {{ book.author_name }}</p>
+    <table class="table table-sm w-auto">
+      <tr><th>ISBN</th><td>{{ book.isbn|default:"N/A" }}</td></tr>
+      <tr><th>Genre</th><td>{{ book.genre|default:"N/A" }}</td></tr>
+      <tr><th>Year</th><td>{{ book.published_year|default:"N/A" }}</td></tr>
+      <tr><th>Status</th><td>{% if book.available %}<span class="badge bg-success">Available</span>{% else %}<span class="badge bg-secondary">Unavailable</span>{% endif %}</td></tr>
+    </table>
+    {% if book.description %}<p>{{ book.description }}</p>{% endif %}
+    <div class="mt-3 d-flex gap-2">
+      <a href="{% url 'book_library:list' %}" class="btn btn-outline-secondary">← Back</a>
+      {% if user.is_authenticated %}
+      <a href="{% url 'book_library:update' book.pk %}" class="btn btn-outline-primary">Edit</a>
+      <a href="{% url 'book_library:delete' book.pk %}" class="btn btn-outline-danger">Delete</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
 {% endblock %}

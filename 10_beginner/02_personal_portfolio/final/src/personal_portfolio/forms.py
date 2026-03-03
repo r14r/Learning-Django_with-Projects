@@ -1,11 +1,15 @@
 from django import forms
-from .models import Item
+from .models import Project
 
-class ItemForm(forms.ModelForm):
+
+class ProjectForm(forms.ModelForm):
     class Meta:
-        model  = Item
-        fields = ['title', 'description']
+        model  = Project
+        fields = ['title', 'description', 'technology', 'live_url', 'github_url', 'image']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
             'title':       forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
+            'technology':  forms.TextInput(attrs={'class': 'form-control'}),
+            'live_url':    forms.URLInput(attrs={'class': 'form-control'}),
+            'github_url':  forms.URLInput(attrs={'class': 'form-control'}),
         }

@@ -1,12 +1,25 @@
 {% extends "base.html" %}
-{% block title %}{{ object.title }}{% endblock %}
+{% block title %}Message: {{ object.subject }}{% endblock %}
 {% block content %}
-<h1>{{ object.title }}</h1>
-<p class="text-muted">By {{ object.author }} on {{ object.created_at|date:"Y-m-d" }}</p>
-<p>{{ object.description }}</p>
-{% if user == object.author %}
-<a href="{% url 'contact_form:update' object.pk %}" class="btn btn-secondary">Edit</a>
-<a href="{% url 'contact_form:delete' object.pk %}" class="btn btn-danger">Delete</a>
-{% endif %}
-<a href="{% url 'contact_form:list' %}" class="btn btn-outline-secondary">Back</a>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1>{{ object.subject }}</h1>
+  <a href="{% url 'contact_form:inbox' %}" class="btn btn-outline-secondary">← Inbox</a>
+</div>
+<div class="card mb-3">
+  <div class="card-body">
+    <p><strong>From:</strong> {{ object.name }} &lt;{{ object.email }}&gt;</p>
+    <p><strong>Received:</strong> {{ object.submitted_at|date:"Y-m-d H:i" }}</p>
+    <p><strong>Status:</strong>
+      {% if object.is_read %}<span class="badge bg-success">Read</span>{% else %}<span class="badge bg-warning text-dark">Unread</span>{% endif %}
+    </p>
+    <hr>
+    <p>{{ object.message|linebreaksbr }}</p>
+  </div>
+</div>
+<form method="post" action="{% url 'contact_form:mark-read' object.pk %}" class="d-inline">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-sm {% if object.is_read %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
+    {% if object.is_read %}Mark Unread{% else %}Mark Read{% endif %}
+  </button>
+</form>
 {% endblock %}

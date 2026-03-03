@@ -1,8 +1,9 @@
 from django.contrib import admin
-from .models import Item
+from .models import Book
 
-@admin.register(Item)
-class ItemAdmin(admin.ModelAdmin):
-    list_display  = ('title', 'author', 'created_at')
-    list_filter   = ('author',)
-    search_fields = ('title', 'description')
+
+@admin.register(Book)
+class BookAdmin(admin.ModelAdmin):
+    list_display  = ('title', 'author_name', 'genre', 'published_year', 'available')
+    list_filter   = ('available', 'genre')
+    search_fields = ('title', 'author_name', 'isbn')

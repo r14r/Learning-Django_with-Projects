@@ -1,11 +1,13 @@
 from django import forms
-from .models import Item
+from .models import Post
 
-class ItemForm(forms.ModelForm):
+
+class PostForm(forms.ModelForm):
     class Meta:
-        model  = Item
-        fields = ['title', 'description']
+        model  = Post
+        fields = ['title', 'body', 'excerpt', 'published']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'title':       forms.TextInput(attrs={'class': 'form-control'}),
+            'title':   forms.TextInput(attrs={'class': 'form-control'}),
+            'body':    forms.Textarea(attrs={'rows': 10, 'class': 'form-control'}),
+            'excerpt': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
         }

@@ -3,9 +3,9 @@ from . import views
 
 app_name = 'book_library'
 urlpatterns = [
-    path('',               views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/',      views.ItemDetailView.as_view(), name='detail'),
-    path('create/',        views.ItemCreateView.as_view(), name='create'),
-    path('<int:pk>/edit/', views.ItemUpdateView.as_view(), name='update'),
-    path('<int:pk>/del/',  views.ItemDeleteView.as_view(), name='delete'),
+    path('',              views.BookListView.as_view(),   name='list'),
+    path('<int:pk>/',     views.BookDetailView.as_view(), name='detail'),
+    path('add/',          views.BookCreateView.as_view(), name='create'),
+    path('<int:pk>/edit/', views.BookUpdateView.as_view(), name='update'),
+    path('<int:pk>/del/', views.BookDeleteView.as_view(), name='delete'),
 ]

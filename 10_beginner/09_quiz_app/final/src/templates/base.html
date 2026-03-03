@@ -8,7 +8,16 @@
 </head>
 <body>
 <nav class="navbar navbar-dark bg-dark px-3">
-    <a class="navbar-brand" href="/">Quiz App</a>
+    <a class="navbar-brand" href="/">🧠 Quiz App</a>
+    <div class="d-flex gap-2">
+      <a href="{% url 'quiz_app:list' %}" class="btn btn-outline-light btn-sm">Quizzes</a>
+      {% if user.is_authenticated %}
+      <a href="{% url 'quiz_app:create' %}" class="btn btn-outline-success btn-sm">+ New Quiz</a>
+      <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm">Logout</a>
+      {% else %}
+      <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">Login</a>
+      {% endif %}
+    </div>
 </nav>
 <div class="container mt-4">
     {% block content %}{% endblock %}

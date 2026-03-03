@@ -1,46 +1,42 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
-from .models import Item
+from .models import Todo
 
-class ItemTests(TestCase):
+
+class TodoTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(
-            username='tester', password='secret123'
-        )
-        self.item = Item.objects.create(
-            title='Test Item',
-            description='A test item',
-            author=self.user,
+        self.user = User.objects.create_user(username='tester', password='secret123')
+        self.todo = Todo.objects.create(
+            title='Buy groceries', priority='high', author=self.user
         )
 
-    def test_list_view(self):
+    def test_list_requires_login(self):
         resp = self.client.get(reverse('todo_list:list'))
-        self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Test Item')
-
-    def test_detail_view(self):
-        resp = self.client.get(
-            reverse('todo_list:detail', kwargs={'pk': self.item.pk})
-        )
-        self.assertEqual(resp.status_code, 200)
-
-    def test_create_requires_login(self):
-        resp = self.client.get(reverse('todo_list:create'))
         self.assertNotEqual(resp.status_code, 200)
 
-    def test_create_item(self):
+    def test_list_view(self):
         self.client.login(username='tester', password='secret123')
-        resp = self.client.post(
-            reverse('todo_list:create'),
-            {'title': 'New Item', 'description': 'Created in test'},
-        )
-        self.assertEqual(Item.objects.count(), 2)
+        resp = self.client.get(reverse('todo_list:list'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Buy groceries')
 
-    def test_delete_item(self):
+    def test_create_todo(self):
         self.client.login(username='tester', password='secret123')
         self.client.post(
-            reverse('todo_list:delete', kwargs={'pk': self.item.pk})
+            reverse('todo_list:create'),
+            {'title': 'New Task', 'priority': 'medium'}
         )
-        self.assertEqual(Item.objects.count(), 0)
+        self.assertEqual(Todo.objects.count(), 2)
+
+    def test_toggle_done(self):
+        self.client.login(username='tester', password='secret123')
+        self.client.post(reverse('todo_list:toggle', kwargs={'pk': self.todo.pk}))
+        self.todo.refresh_from_db()
+        self.assertTrue(self.todo.is_done)
+
+    def test_delete_todo(self):
+        self.client.login(username='tester', password='secret123')
+        self.client.post(reverse('todo_list:delete', kwargs={'pk': self.todo.pk}))
+        self.assertEqual(Todo.objects.count(), 0)

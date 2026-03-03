@@ -3,9 +3,9 @@ from . import views
 
 app_name = 'contact_form'
 urlpatterns = [
-    path('',               views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/',      views.ItemDetailView.as_view(), name='detail'),
-    path('create/',        views.ItemCreateView.as_view(), name='create'),
-    path('<int:pk>/edit/', views.ItemUpdateView.as_view(), name='update'),
-    path('<int:pk>/del/',  views.ItemDeleteView.as_view(), name='delete'),
+    path('',                      views.ContactFormView.as_view(),   name='list'),
+    path('success/',              views.ContactSuccessView.as_view(), name='success'),
+    path('inbox/',                views.MessageListView.as_view(),    name='inbox'),
+    path('inbox/<int:pk>/',       views.MessageDetailView.as_view(),  name='detail'),
+    path('inbox/<int:pk>/read/',  views.MarkReadView.as_view(),       name='mark-read'),
 ]
