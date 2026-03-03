@@ -1,11 +1,9 @@
 from django import forms
-from .models import Item
+from .models import Comment
 
-class ItemForm(forms.ModelForm):
+
+class CommentForm(forms.ModelForm):
     class Meta:
-        model  = Item
-        fields = ['title', 'description']
-        widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'title':       forms.TextInput(attrs={'class': 'form-control'}),
-        }
+        model  = Comment
+        fields = ['body']
+        widgets = {'body': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'})}

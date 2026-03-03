@@ -1,8 +1,12 @@
 from django.contrib import admin
-from .models import Item
+from .models import Subscriber, Campaign
 
-@admin.register(Item)
-class ItemAdmin(admin.ModelAdmin):
-    list_display  = ('title', 'author', 'created_at')
-    list_filter   = ('author',)
-    search_fields = ('title', 'description')
+@admin.register(Subscriber)
+class SubscriberAdmin(admin.ModelAdmin):
+    list_display  = ('email', 'name', 'confirmed', 'created_at')
+    list_filter   = ('confirmed',)
+    search_fields = ('email', 'name')
+
+@admin.register(Campaign)
+class CampaignAdmin(admin.ModelAdmin):
+    list_display = ('subject', 'owner', 'sent_at', 'created_at')

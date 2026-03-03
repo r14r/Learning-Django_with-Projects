@@ -1,11 +1,22 @@
 from django import forms
-from .models import Item
+from .models import Post, Profile, Comment
 
-class ItemForm(forms.ModelForm):
+
+class PostForm(forms.ModelForm):
     class Meta:
-        model  = Item
-        fields = ['title', 'description']
-        widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'title':       forms.TextInput(attrs={'class': 'form-control'}),
-        }
+        model  = Post
+        fields = ['body', 'image']
+        widgets = {'body': forms.Textarea(attrs={'rows': 3})}
+
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model  = Profile
+        fields = ['bio', 'avatar', 'website']
+
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model  = Comment
+        fields = ['body']
+        widgets = {'body': forms.Textarea(attrs={'rows': 2})}

@@ -1,11 +1,18 @@
 from django import forms
-from .models import Item
+from .models import Invoice, Client as InvoiceClient
 
-class ItemForm(forms.ModelForm):
+
+class ClientForm(forms.ModelForm):
     class Meta:
-        model  = Item
-        fields = ['title', 'description']
+        model  = InvoiceClient
+        fields = ['name', 'email', 'address', 'tax_id']
+
+
+class InvoiceForm(forms.ModelForm):
+    class Meta:
+        model  = Invoice
+        fields = ['client', 'issue_date', 'due_date', 'tax_rate', 'notes']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'title':       forms.TextInput(attrs={'class': 'form-control'}),
+            'issue_date': forms.DateInput(attrs={'type': 'date'}),
+            'due_date':   forms.DateInput(attrs={'type': 'date'}),
         }

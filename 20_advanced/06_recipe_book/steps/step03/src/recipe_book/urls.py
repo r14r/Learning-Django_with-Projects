@@ -3,6 +3,7 @@ from . import views
 
 app_name = 'recipe_book'
 urlpatterns = [
-    path('',          views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/', views.ItemDetailView.as_view(), name='detail'),
+    path('',                       views.RecipeListView.as_view(),   name='list'),
+    path('category/<slug:slug>/',  views.RecipeListView.as_view(),   name='category'),
+    path('recipe/<slug:slug>/',    views.RecipeDetailView.as_view(), name='detail'),
 ]

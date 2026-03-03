@@ -3,6 +3,6 @@ from . import views
 
 app_name = 'file_manager'
 urlpatterns = [
-    path('',          views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/', views.ItemDetailView.as_view(), name='detail'),
+    path('',          views.FileListView.as_view(), name='list'),
+    path('upload/',   views.upload_view,            name='upload'),
 ]

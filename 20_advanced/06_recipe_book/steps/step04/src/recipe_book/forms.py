@@ -1,11 +1,13 @@
 from django import forms
-from .models import Item
+from .models import Recipe
 
-class ItemForm(forms.ModelForm):
+
+class RecipeForm(forms.ModelForm):
     class Meta:
-        model  = Item
-        fields = ['title', 'description']
+        model  = Recipe
+        fields = ['title', 'slug', 'categories', 'description', 'image',
+                  'prep_time', 'cook_time', 'servings', 'instructions', 'published']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'title':       forms.TextInput(attrs={'class': 'form-control'}),
+            'description':  forms.Textarea(attrs={'rows': 3}),
+            'instructions': forms.Textarea(attrs={'rows': 8}),
         }

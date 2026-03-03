@@ -3,6 +3,7 @@ from . import views
 
 app_name = 'social_network'
 urlpatterns = [
-    path('',          views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/', views.ItemDetailView.as_view(), name='detail'),
+    path('',                        views.ExploreView.as_view(),  name='explore'),
+    path('profile/<str:username>/', views.profile_view,           name='profile'),
+    path('follow/<str:username>/',  views.follow_view,            name='follow'),
 ]

@@ -1,11 +1,19 @@
 from django import forms
-from .models import Item
+from .models import Task, TaskComment
 
-class ItemForm(forms.ModelForm):
+
+class TaskForm(forms.ModelForm):
     class Meta:
-        model  = Item
-        fields = ['title', 'description']
+        model  = Task
+        fields = ['title', 'description', 'status', 'priority', 'due_date', 'assignee', 'labels']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'title':       forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'rows': 3}),
+            'due_date':    forms.DateInput(attrs={'type': 'date'}),
         }
+
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model  = TaskComment
+        fields = ['body']
+        widgets = {'body': forms.Textarea(attrs={'rows': 2})}
