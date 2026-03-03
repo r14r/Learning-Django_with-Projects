@@ -17,6 +17,8 @@ INSTALLED_APPS = [
     'saas_platform',          # ← add your app
 ]
 
+ROOT_URLCONF = 'config.urls'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

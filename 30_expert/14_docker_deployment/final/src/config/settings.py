@@ -17,6 +17,8 @@ INSTALLED_APPS = [
     'docker_deployment',          # ← add your app
 ]
 
+ROOT_URLCONF = 'config.urls'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
