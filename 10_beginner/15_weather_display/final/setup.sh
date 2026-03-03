@@ -11,4 +11,4 @@ pip freeze > requirements.txt
 django-admin startproject config .
 
 # 4. Create the application
-python manage.py startapp weather_display
+python manage.py startapp weather

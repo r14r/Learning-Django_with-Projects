@@ -13,13 +13,13 @@ class WeatherDisplayTests(TestCase):
         self.user = User.objects.create_user(username='tester', password='secret123')
 
     def test_get_view(self):
-        resp = self.client.get(reverse('weather_display:list'))
+        resp = self.client.get(reverse('weather:list'))
         self.assertEqual(resp.status_code, 200)
 
     def test_post_without_api(self):
-        with patch('weather_display.views.get_weather', return_value=None):
+        with patch('weather.views.get_weather', return_value=None):
             resp = self.client.post(
-                reverse('weather_display:list'),
+                reverse('weather:list'),
                 {'city': 'UnknownCity'},
             )
         self.assertEqual(resp.status_code, 200)
@@ -27,9 +27,9 @@ class WeatherDisplayTests(TestCase):
 
     def test_post_with_mock_data(self):
         mock_data = {'temperature': 22.5, 'condition': 'Sunny', 'humidity': 60}
-        with patch('weather_display.views.get_weather', return_value=mock_data):
+        with patch('weather.views.get_weather', return_value=mock_data):
             resp = self.client.post(
-                reverse('weather_display:list'),
+                reverse('weather:list'),
                 {'city': 'London'},
             )
         self.assertEqual(resp.status_code, 200)
@@ -39,7 +39,7 @@ class WeatherDisplayTests(TestCase):
         self.assertEqual(search.condition, 'Sunny')
 
     def test_history_requires_login(self):
-        resp = self.client.get(reverse('weather_display:detail'))
+        resp = self.client.get(reverse('weather:detail'))
         self.assertNotEqual(resp.status_code, 200)
 
     def test_weather_search_str(self):

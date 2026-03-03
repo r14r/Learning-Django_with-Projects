@@ -19,23 +19,16 @@
 <div class="alert alert-warning">{{ error }}</div>
 {% endif %}
 
-{% if weather_data %}
+{% if weather %}
 <div class="card mt-3 col-md-6">
   <div class="card-body">
     <h3 class="card-title">{{ city }}</h3>
     <div class="row text-center">
-      <div class="col-4">
-        <div class="display-5">{{ weather_data.temperature }}°C</div>
-        <small class="text-muted">Temperature</small>
-      </div>
-      <div class="col-4">
-        <div class="display-5">{{ weather_data.humidity }}%</div>
-        <small class="text-muted">Humidity</small>
-      </div>
-      <div class="col-4">
-        <div class="h5 mt-3">{{ weather_data.condition }}</div>
-        <small class="text-muted">Condition</small>
-      </div>
+      <div class="col-12"><div class="display-5">{{ weather.temperature }}°C</div><small class="text-muted">Temperature</small></div>
+      <div class="col-12"><div class="display-5">{{ weather.humidity }}%</div><small class="text-muted">Humidity</small></div>
+      <div class="col-12"><div class="display-5">{{ weather.windspeed }}</div><small class="text-muted">Wind: Speed</small></div>
+      <div class="col-12"><div class="display-5">{{ weather.winddirection }}</div><small class="text-muted">Wind: Direction</small></div>
+
     </div>
   </div>
 </div>

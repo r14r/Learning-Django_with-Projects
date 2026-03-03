@@ -1,0 +1,9 @@
+django
+requests
+
+python-decouple
+django-crispy-forms
+crispy-bootstrap5
+whitenoise
+
+pillow

@@ -31,7 +31,7 @@ migrate:
 
 # Start the Django development server
 run:
-    python manage.py runserver
+    python manage.py runserver 50000
 
 # Open the Django interactive shell
 shell:

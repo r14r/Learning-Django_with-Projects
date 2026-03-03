@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
-from weather_display.models import WeatherSearch
+from weather.models import WeatherSearch
 
 SEARCHES = [
     {'city': 'London', 'temperature': 15.0, 'condition': 'Partly cloudy', 'humidity': 72},

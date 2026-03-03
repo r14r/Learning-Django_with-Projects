@@ -1,6 +1,7 @@
 # Final – Complete Running Application
 
 ## What this is
+
 This is the **complete, fully-integrated application** for **Weather Display**.
 It combines all code from steps 01 through 05 into a single working project that
 you can run immediately.
@@ -32,7 +33,7 @@ python manage.py createsuperuser  # or: just createsuperuser
 python manage.py runserver        # or: just run
 ```
 
-Open **http://127.0.0.1:8000/** in your browser.
+Open **<http://127.0.0.1:8000/>** in your browser.
 
 ## Available `just` commands
 
@@ -51,20 +52,20 @@ Open **http://127.0.0.1:8000/** in your browser.
 
 ## Files included
 
-  - `.env.example`
-  - `config/settings.py`
-  - `config/urls.py`
-  - `registration/login.html`
-  - `requirements.txt`
-  - `setup.sh`
-  - `templates/base.html`
-  - `weather_display/admin.py`
-  - `weather_display/forms.py`
-  - `weather_display/models.py`
-  - `weather_display/tests.py`
-  - `weather_display/urls.py`
-  - `weather_display/views.py`
-  - `justfile`
+- `.env.example`
+- `config/settings.py`
+- `config/urls.py`
+- `registration/login.html`
+- `requirements.txt`
+- `setup.sh`
+- `templates/base.html`
+- `weather/admin.py`
+- `weather/forms.py`
+- `weather/models.py`
+- `weather/tests.py`
+- `weather/urls.py`
+- `weather/views.py`
+- `justfile`
 
 ## How this was built
 
