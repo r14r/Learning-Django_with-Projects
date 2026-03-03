@@ -1,8 +1,11 @@
 from django.contrib import admin
-from .models import Item
+from .models import PageView, Event
 
-@admin.register(Item)
-class ItemAdmin(admin.ModelAdmin):
-    list_display  = ('title', 'author', 'created_at')
-    list_filter   = ('author',)
-    search_fields = ('title', 'description')
+@admin.register(PageView)
+class PageViewAdmin(admin.ModelAdmin):
+    list_display = ('path', 'method', 'user', 'timestamp')
+    date_hierarchy = 'timestamp'
+
+@admin.register(Event)
+class EventAdmin(admin.ModelAdmin):
+    list_display = ('name', 'timestamp')

@@ -1,11 +1,13 @@
 from django import forms
-from .models import Item
+from .models import Event
 
-class ItemForm(forms.ModelForm):
+
+class EventForm(forms.ModelForm):
     class Meta:
-        model  = Item
-        fields = ['title', 'description']
+        model  = Event
+        fields = ['title', 'slug', 'category', 'description', 'venue',
+                  'start', 'end', 'capacity', 'image', 'is_public']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'title':       forms.TextInput(attrs={'class': 'form-control'}),
+            'start': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'end':   forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }

@@ -3,9 +3,9 @@ from . import views
 
 app_name = 'blog_with_comments'
 urlpatterns = [
-    path('',               views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/',      views.ItemDetailView.as_view(), name='detail'),
-    path('create/',        views.ItemCreateView.as_view(), name='create'),
-    path('<int:pk>/edit/', views.ItemUpdateView.as_view(), name='update'),
-    path('<int:pk>/del/',  views.ItemDeleteView.as_view(), name='delete'),
+    path('', views.PostListView.as_view(), name='list'),
+    path('tag/<slug:slug>/', views.PostListView.as_view(), name='tag'),
+    path('<int:year>/<int:month>/<int:day>/<slug:slug>/',
+         views.post_detail, name='detail'),
+    path('post/<int:pk>/comment/', views.add_comment, name='add-comment'),
 ]

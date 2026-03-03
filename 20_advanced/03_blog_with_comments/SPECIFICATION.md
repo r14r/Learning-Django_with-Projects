@@ -8,84 +8,71 @@
 
 ## 1. Overview
 
-Blog with user comments, pagination and tags. This project teaches fundamental Django concepts appropriate for the **advanced** level including models, views, templates, forms and URL routing.
+Build a full-featured blog where authors can publish posts, readers can leave
+comments, and content is organised with tags and categories.
 
 ## 2. Goals
 
-- Understand the Django request/response cycle
-- Create and apply database models with Django ORM
-- Build HTML templates using the Django template language
-- Handle user input through Django forms
-- Write clean, testable Django code
+- Model posts with many-to-many tags and a status workflow (draft → published)
+- Build paginated list and detail views
+- Allow authenticated users to post comments
+- Implement a tag cloud and related-posts sidebar
 
 ## 3. Functional Requirements
 
-### 3.1 Core Features
-
 | # | Feature | Priority |
 |---|---------|----------|
-| 1 | Display a home page | Must |
-| 2 | List and detail views for the main entity | Must |
-| 3 | Create / Edit / Delete (CRUD) operations | Must |
-| 4 | Basic user authentication (login/logout) | Should |
-| 5 | Input validation and error messages | Should |
-| 6 | Responsive HTML layout | Could |
+| 1 | Post list (paginated, newest first) | Must |
+| 2 | Post detail with full body | Must |
+| 3 | Comments on posts (authenticated) | Must |
+| 4 | Tags on posts (many-to-many) | Must |
+| 5 | Draft / published status (only published visible) | Must |
+| 6 | Filter posts by tag | Should |
+| 7 | Author profile page | Should |
+| 8 | Markdown body rendering | Could |
 
-### 3.2 User Stories
-
-- **As a visitor**, I want to browse the main content so that I can find what I need.
-- **As a registered user**, I want to create and manage my own entries.
-- **As an admin**, I want to manage all content through the Django admin interface.
-
-## 4. Non-Functional Requirements
-
-- The application must run on Django 4.2+ with Python 3.11+
-- Pages must load within 2 seconds on a local development server
-- All forms must validate input and display meaningful error messages
-- Code must follow PEP 8 style guidelines
-
-## 5. Data Model
+## 4. Data Model
 
 ```
-Entity
-├── id          : AutoField (primary key)
-├── title       : CharField(max_length=200)
-├── description : TextField(blank=True)
-├── created_at  : DateTimeField(auto_now_add=True)
-├── updated_at  : DateTimeField(auto_now=True)
-└── author      : ForeignKey(User, on_delete=CASCADE)
+Tag
+├── id   : AutoField
+├── name : CharField(max_length=50, unique=True)
+└── slug : SlugField(unique=True)
+
+Post
+├── id         : AutoField
+├── title      : CharField(max_length=250)
+├── slug       : SlugField(unique_for_date='publish')
+├── author     : ForeignKey(User)
+├── body       : TextField
+├── image      : ImageField(upload_to='posts/', blank=True)
+├── tags       : ManyToManyField(Tag, blank=True)
+├── status     : CharField choices=[draft, published]
+├── publish    : DateTimeField
+└── created_at : DateTimeField(auto_now_add=True)
+
+Comment
+├── id         : AutoField
+├── post       : ForeignKey(Post, related_name='comments')
+├── author     : ForeignKey(User)
+├── body       : TextField
+├── active     : BooleanField(default=True)
+└── created_at : DateTimeField(auto_now_add=True)
 ```
 
-## 6. URL Structure
+## 5. URL Structure
 
-| URL Pattern | View | Name |
-|-------------|------|------|
-| `/` | HomeView | `home` |
-| `/items/` | ListView | `item-list` |
-| `/items/<pk>/` | DetailView | `item-detail` |
-| `/items/create/` | CreateView | `item-create` |
-| `/items/<pk>/edit/` | UpdateView | `item-update` |
-| `/items/<pk>/delete/` | DeleteView | `item-delete` |
+| URL | View | Name |
+|-----|------|------|
+| `/` | PostListView | `blog:list` |
+| `/tag/<slug>/` | PostListView (filtered) | `blog:tag` |
+| `/post/<year>/<month>/<day>/<slug>/` | PostDetailView | `blog:detail` |
+| `/post/<pk>/comment/` | add_comment | `blog:add-comment` |
 
-## 7. Pages and Templates
+## 6. Acceptance Criteria
 
-- **Home** – Landing page with a brief introduction and call-to-action.
-- **List** – Paginated list of all items with search/filter.
-- **Detail** – Full view of a single item.
-- **Form** – Shared create/edit form with client-side validation.
-- **Delete confirmation** – Confirmation page before deleting.
-
-## 8. Acceptance Criteria
-
-- [ ] All CRUD operations work correctly
-- [ ] Forms display validation errors inline
-- [ ] Django admin shows all models with search and filter
-- [ ] At least 10 unit/integration tests pass (`python manage.py test`)
-- [ ] No secrets are hard-coded; environment variables are used
-- [ ] `requirements.txt` lists all dependencies with pinned versions
-
-## 9. Out of Scope
-
-- Payment processing
-- Real-time features (WebSockets)
-- Third-party social authentication
+- [ ] Only published posts appear in the public list
+- [ ] Comments require login; active=False comments hidden
+- [ ] Pagination works with 5 posts per page
+- [ ] Tag filter shows only posts with that tag
+- [ ] At least 10 tests pass

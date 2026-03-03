@@ -1,4 +1,4 @@
 from django.http import HttpResponse
 
 def home(request):
-    return HttpResponse('<h1>Welcome to Advanced Task Manager!</h1>')
+    return HttpResponse('<h1>Task Manager</h1>')

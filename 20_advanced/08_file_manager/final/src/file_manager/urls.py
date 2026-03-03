@@ -3,9 +3,10 @@ from . import views
 
 app_name = 'file_manager'
 urlpatterns = [
-    path('',               views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/',      views.ItemDetailView.as_view(), name='detail'),
-    path('create/',        views.ItemCreateView.as_view(), name='create'),
-    path('<int:pk>/edit/', views.ItemUpdateView.as_view(), name='update'),
-    path('<int:pk>/del/',  views.ItemDeleteView.as_view(), name='delete'),
+    path('',                       views.FileListView.as_view(),   name='list'),
+    path('folder/<int:pk>/',       views.FolderView.as_view(),     name='folder'),
+    path('folder/create/',         views.FolderCreateView.as_view(), name='folder-create'),
+    path('upload/',                views.upload_view,              name='upload'),
+    path('download/<int:pk>/',     views.download_view,            name='download'),
+    path('delete/<int:pk>/',       views.delete_file,              name='delete'),
 ]

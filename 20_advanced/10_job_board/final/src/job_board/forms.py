@@ -1,11 +1,16 @@
 from django import forms
-from .models import Item
+from .models import Job, Application
 
-class ItemForm(forms.ModelForm):
+
+class JobForm(forms.ModelForm):
     class Meta:
-        model  = Item
-        fields = ['title', 'description']
-        widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'title':       forms.TextInput(attrs={'class': 'form-control'}),
-        }
+        model  = Job
+        fields = ['title', 'description', 'location', 'job_type', 'salary_min', 'salary_max', 'is_active']
+        widgets = {'description': forms.Textarea(attrs={'rows': 6})}
+
+
+class ApplicationForm(forms.ModelForm):
+    class Meta:
+        model  = Application
+        fields = ['cover_letter', 'resume']
+        widgets = {'cover_letter': forms.Textarea(attrs={'rows': 5})}

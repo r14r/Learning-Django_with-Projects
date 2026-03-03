@@ -1,4 +1,4 @@
 from django.http import HttpResponse
 
 def home(request):
-    return HttpResponse('<h1>Welcome to Event Calendar!</h1>')
+    return HttpResponse('<h1>Event Calendar</h1>')

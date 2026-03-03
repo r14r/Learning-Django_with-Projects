@@ -1,122 +1,38 @@
-# Step 5 – Authentication, Tests & Deployment Prep
-
-## What you'll add
-User login/logout, a full test suite and production-ready settings.
-
-## config/urls.py  (add auth URLs)
-
-```python
-from django.contrib import admin
-from django.urls import path, include
-from django.contrib.auth import views as auth_views
-
-urlpatterns = [
-    path('admin/',    admin.site.urls),
-    path('accounts/', include('django.contrib.auth.urls')),
-    path('',          include('ecommerce_store.urls')),
-]
-```
-
-## registration/login.html  (template for built-in login view)
-
-```html
-{% extends "base.html" %}
-{% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-4">
-    <h2>Login</h2>
-    <form method="post">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button class="btn btn-primary w-100" type="submit">Login</button>
-    </form>
-  </div>
-</div>
-{% endblock %}
-```
+# Step 5 – Tests & Deployment Prep
 
 ## ecommerce_store/tests.py
 
 ```python
 from django.test import TestCase, Client
-from django.contrib.auth.models import User
 from django.urls import reverse
-from .models import Item
+from django.contrib.auth.models import User
+from decimal import Decimal
+from .models import Category, Product, Order, OrderItem
 
-class ItemTests(TestCase):
+class StoreTests(TestCase):
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(
-            username='tester', password='secret123'
-        )
-        self.item = Item.objects.create(
-            title='Test Item',
-            description='A test item',
-            author=self.user,
+        self.client   = Client()
+        self.category = Category.objects.create(name='Books', slug='books')
+        self.product  = Product.objects.create(
+            category=self.category, name='Django Book',
+            slug='django-book', price=Decimal('29.99'), stock=10
         )
 
-    def test_list_view(self):
-        resp = self.client.get(reverse('ecommerce_store:list'))
+    def test_product_list(self):
+        resp = self.client.get(reverse('ecommerce_store:product-list'))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'Test Item')
+        self.assertContains(resp, 'Django Book')
 
-    def test_detail_view(self):
-        resp = self.client.get(
-            reverse('ecommerce_store:detail', kwargs={'pk': self.item.pk})
-        )
-        self.assertEqual(resp.status_code, 200)
+    def test_add_to_cart(self):
+        self.client.post(reverse('ecommerce_store:cart-add', kwargs={'pk': self.product.pk}))
+        resp = self.client.get(reverse('ecommerce_store:cart'))
+        self.assertContains(resp, 'Django Book')
 
-    def test_create_requires_login(self):
-        resp = self.client.get(reverse('ecommerce_store:create'))
-        self.assertNotEqual(resp.status_code, 200)
-
-    def test_create_item(self):
-        self.client.login(username='tester', password='secret123')
-        resp = self.client.post(
-            reverse('ecommerce_store:create'),
-            {'title': 'New Item', 'description': 'Created in test'},
-        )
-        self.assertEqual(Item.objects.count(), 2)
-
-    def test_delete_item(self):
-        self.client.login(username='tester', password='secret123')
-        self.client.post(
-            reverse('ecommerce_store:delete', kwargs={'pk': self.item.pk})
-        )
-        self.assertEqual(Item.objects.count(), 0)
+    def test_checkout_creates_order(self):
+        self.client.post(reverse('ecommerce_store:cart-add', kwargs={'pk': self.product.pk}))
+        resp = self.client.post(reverse('ecommerce_store:checkout'), {
+            'first_name': 'Alice', 'last_name': 'Smith',
+            'email': 'alice@example.com', 'address': '123 Main St',
+        })
+        self.assertEqual(Order.objects.count(), 1)
 ```
-
-## Run tests
-
-```bash
-python manage.py test ecommerce_store
-```
-
-## .env.example
-
-```
-SECRET_KEY=your-very-secret-key-here
-DEBUG=True
-ALLOWED_HOSTS=127.0.0.1,localhost
-DATABASE_URL=sqlite:///db.sqlite3
-```
-
-## requirements.txt
-
-```
-Django==4.2.11
-python-decouple==3.8
-django-crispy-forms==2.1
-crispy-bootstrap5==2024.2
-whitenoise==6.6.0
-Pillow==10.3.0
-```
-
-## Deployment checklist
-
-- [ ] `DEBUG=False` in production
-- [ ] Strong `SECRET_KEY` via environment variable
-- [ ] `ALLOWED_HOSTS` configured
-- [ ] Static files collected: `python manage.py collectstatic`
-- [ ] Database migrated: `python manage.py migrate`
-- [ ] Superuser created: `python manage.py createsuperuser`

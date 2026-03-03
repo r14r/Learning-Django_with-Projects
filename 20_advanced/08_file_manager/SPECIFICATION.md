@@ -8,84 +8,64 @@
 
 ## 1. Overview
 
-Upload, organise and serve files securely. This project teaches fundamental Django concepts appropriate for the **advanced** level including models, views, templates, forms and URL routing.
+Build a secure file management application where authenticated users can upload
+files, organise them into folders, and share or download them.
 
 ## 2. Goals
 
-- Understand the Django request/response cycle
-- Create and apply database models with Django ORM
-- Build HTML templates using the Django template language
-- Handle user input through Django forms
-- Write clean, testable Django code
+- Handle multi-file uploads with progress indication
+- Organise files into nested folder structures
+- Enforce per-user storage quotas
+- Serve files securely via Django (not direct static URLs)
 
 ## 3. Functional Requirements
 
-### 3.1 Core Features
-
 | # | Feature | Priority |
 |---|---------|----------|
-| 1 | Display a home page | Must |
-| 2 | List and detail views for the main entity | Must |
-| 3 | Create / Edit / Delete (CRUD) operations | Must |
-| 4 | Basic user authentication (login/logout) | Should |
-| 5 | Input validation and error messages | Should |
-| 6 | Responsive HTML layout | Could |
+| 1 | Upload one or multiple files | Must |
+| 2 | Create and navigate folders | Must |
+| 3 | Download files via a protected view | Must |
+| 4 | Delete files and folders | Must |
+| 5 | File type validation (no executables) | Must |
+| 6 | Show file size, upload date, MIME type | Should |
+| 7 | Search by filename | Should |
+| 8 | Share file with a time-limited public link | Could |
 
-### 3.2 User Stories
-
-- **As a visitor**, I want to browse the main content so that I can find what I need.
-- **As a registered user**, I want to create and manage my own entries.
-- **As an admin**, I want to manage all content through the Django admin interface.
-
-## 4. Non-Functional Requirements
-
-- The application must run on Django 4.2+ with Python 3.11+
-- Pages must load within 2 seconds on a local development server
-- All forms must validate input and display meaningful error messages
-- Code must follow PEP 8 style guidelines
-
-## 5. Data Model
+## 4. Data Model
 
 ```
-Entity
-├── id          : AutoField (primary key)
-├── title       : CharField(max_length=200)
-├── description : TextField(blank=True)
-├── created_at  : DateTimeField(auto_now_add=True)
-├── updated_at  : DateTimeField(auto_now=True)
-└── author      : ForeignKey(User, on_delete=CASCADE)
+Folder
+├── id         : AutoField
+├── name       : CharField(max_length=255)
+├── owner      : ForeignKey(User)
+├── parent     : ForeignKey('self', null=True, blank=True)
+└── created_at : DateTimeField(auto_now_add=True)
+
+UploadedFile
+├── id         : AutoField
+├── owner      : ForeignKey(User)
+├── folder     : ForeignKey(Folder, null=True, blank=True)
+├── original_name : CharField(max_length=255)
+├── file       : FileField(upload_to=user_upload_path)
+├── mime_type  : CharField(max_length=100)
+├── size       : BigIntegerField
+└── uploaded_at : DateTimeField(auto_now_add=True)
 ```
 
-## 6. URL Structure
+## 5. URL Structure
 
-| URL Pattern | View | Name |
-|-------------|------|------|
-| `/` | HomeView | `home` |
-| `/items/` | ListView | `item-list` |
-| `/items/<pk>/` | DetailView | `item-detail` |
-| `/items/create/` | CreateView | `item-create` |
-| `/items/<pk>/edit/` | UpdateView | `item-update` |
-| `/items/<pk>/delete/` | DeleteView | `item-delete` |
+| URL | View | Name |
+|-----|------|------|
+| `/` | FileListView | `file_manager:list` |
+| `/folder/<pk>/` | FolderView | `file_manager:folder` |
+| `/upload/` | upload_view | `file_manager:upload` |
+| `/download/<pk>/` | download_view | `file_manager:download` |
+| `/delete/<pk>/` | delete_file | `file_manager:delete` |
+| `/folder/create/` | FolderCreateView | `file_manager:folder-create` |
 
-## 7. Pages and Templates
+## 6. Acceptance Criteria
 
-- **Home** – Landing page with a brief introduction and call-to-action.
-- **List** – Paginated list of all items with search/filter.
-- **Detail** – Full view of a single item.
-- **Form** – Shared create/edit form with client-side validation.
-- **Delete confirmation** – Confirmation page before deleting.
-
-## 8. Acceptance Criteria
-
-- [ ] All CRUD operations work correctly
-- [ ] Forms display validation errors inline
-- [ ] Django admin shows all models with search and filter
-- [ ] At least 10 unit/integration tests pass (`python manage.py test`)
-- [ ] No secrets are hard-coded; environment variables are used
-- [ ] `requirements.txt` lists all dependencies with pinned versions
-
-## 9. Out of Scope
-
-- Payment processing
-- Real-time features (WebSockets)
-- Third-party social authentication
+- [ ] Files saved to `media/uploads/<user_id>/`
+- [ ] Download URL requires login and owner check
+- [ ] File types validated (blocked: .exe, .bat, .sh, .php)
+- [ ] At least 8 tests pass

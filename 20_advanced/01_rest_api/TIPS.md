@@ -7,228 +7,169 @@
 
 ## 1. Architecture Overview
 
-Use the standard Django MTV (Model-Template-View) architecture:
-
 ```
 01_rest_api/
-├── manage.py
-├── config/                  # Project settings package
-│   ├── __init__.py
+├── config/
 │   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-├── rest_api/  # Main application
+│   └── urls.py
+├── rest_api/
 │   ├── migrations/
-│   ├── templates/
-│   │   └── rest_api/
-│   ├── static/
 │   ├── admin.py
-│   ├── apps.py
-│   ├── forms.py
 │   ├── models.py
-│   ├── tests.py
-│   ├── urls.py
-│   └── views.py
-├── templates/
-│   └── base.html
+│   ├── serializers.py      ← new in DRF projects
+│   ├── views.py            ← ModelViewSet / APIView
+│   ├── urls.py             ← DefaultRouter
+│   ├── permissions.py      ← custom IsOwnerOrReadOnly
+│   ├── filters.py          ← django-filter FilterSet
+│   └── tests.py
 ├── requirements.txt
 └── .env.example
 ```
 
-## 2. Recommended Frameworks & Libraries
+## 2. Install dependencies
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| Django | 4.2 LTS | Web framework |
-| django-crispy-forms | 2.x | Beautiful form rendering |
-| crispy-bootstrap5 | 2023.x | Bootstrap 5 template pack |
-| python-decouple | 3.x | Environment variable management |
-| Pillow | 10.x | Image handling (if needed) |
-| whitenoise | 6.x | Static file serving in production |
-
-Install with:
 ```bash
-pip install django django-crispy-forms crispy-bootstrap5 python-decouple whitenoise Pillow
+pip install django djangorestframework django-filter python-decouple Pillow
 pip freeze > requirements.txt
 ```
 
-## 3. Models
+## 3. Settings additions
 
 ```python
-# models.py
-from django.db import models
-from django.contrib.auth.models import User
-from django.urls import reverse
-
-class Item(models.Model):
-    title       = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    created_at  = models.DateTimeField(auto_now_add=True)
-    updated_at  = models.DateTimeField(auto_now=True)
-    author      = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='items'
-    )
-
-    class Meta:
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return self.title
-
-    def get_absolute_url(self):
-        return reverse('item-detail', kwargs={'pk': self.pk})
-```
-
-**Tips:**
-- Always define `__str__` and `get_absolute_url` on models.
-- Use `auto_now_add` for creation timestamps and `auto_now` for update timestamps.
-- Add `class Meta: ordering` to control default queryset ordering.
-
-## 4. Views
-
-Prefer **Class-Based Views** for CRUD:
-
-```python
-# views.py
-from django.views.generic import (
-    ListView, DetailView, CreateView, UpdateView, DeleteView
-)
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
-from .models import Item
-
-class ItemListView(ListView):
-    model = Item
-    paginate_by = 10
-
-class ItemDetailView(DetailView):
-    model = Item
-
-class ItemCreateView(LoginRequiredMixin, CreateView):
-    model = Item
-    fields = ['title', 'description']
-
-    def form_valid(self, form):
-        form.instance.author = self.request.user
-        return super().form_valid(form)
-
-class ItemUpdateView(LoginRequiredMixin, UpdateView):
-    model = Item
-    fields = ['title', 'description']
-
-class ItemDeleteView(LoginRequiredMixin, DeleteView):
-    model = Item
-    success_url = reverse_lazy('item-list')
-```
-
-## 5. URL Configuration
-
-```python
-# urls.py (app-level)
-from django.urls import path
-from . import views
-
-app_name = 'items'
-
-urlpatterns = [
-    path('',               views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/',      views.ItemDetailView.as_view(), name='detail'),
-    path('create/',        views.ItemCreateView.as_view(), name='create'),
-    path('<int:pk>/edit/', views.ItemUpdateView.as_view(), name='update'),
-    path('<int:pk>/del/',  views.ItemDeleteView.as_view(), name='delete'),
+INSTALLED_APPS = [
+    ...
+    'rest_framework',
+    'rest_framework.authtoken',
+    'django_filters',
+    'rest_api',
 ]
-```
 
-## 6. Templates
-
-Use template inheritance to avoid repetition:
-
-```html
-<!-- templates/base.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{% block title %}Django App{% endblock %}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/css/bootstrap.min.css">
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <!-- navigation here -->
-    </nav>
-    <main class="container mt-4">
-        {% block content %}{% endblock %}
-    </main>
-</body>
-</html>
-```
-
-## 7. Forms
-
-```python
-# forms.py
-from django import forms
-from .models import Item
-
-class ItemForm(forms.ModelForm):
-    class Meta:
-        model = Item
-        fields = ['title', 'description']
-        widgets = {
-            'description': forms.Textarea(attrs={'rows': 4}),
-        }
-
-    def clean_title(self):
-        title = self.cleaned_data['title']
-        if len(title) < 3:
-            raise forms.ValidationError('Title must be at least 3 characters.')
-        return title
-```
-
-## 8. Settings Tips
-
-```python
-# Use python-decouple for environment variables
-from decouple import config
-
-SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
 }
 ```
 
-## 9. Testing Tips
+## 4. Models
 
 ```python
-# tests.py
-from django.test import TestCase, Client
-from django.contrib.auth.models import User
-from .models import Item
+class Author(models.Model):
+    name = models.CharField(max_length=200)
+    bio  = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self): return self.name
 
-class ItemModelTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user('testuser', password='pass123')
-        self.item = Item.objects.create(
-            title='Test Item', author=self.user
-        )
+class Book(models.Model):
+    title       = models.CharField(max_length=300)
+    author      = models.ForeignKey(Author, on_delete=models.CASCADE, related_name='books')
+    genre       = models.CharField(max_length=100)
+    published   = models.IntegerField()
+    description = models.TextField(blank=True)
+    cover       = models.ImageField(upload_to='covers/', blank=True)
+    owner       = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at  = models.DateTimeField(auto_now_add=True)
+    def __str__(self): return self.title
 
-    def test_str(self):
-        self.assertEqual(str(self.item), 'Test Item')
+class Review(models.Model):
+    book    = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='reviews')
+    author  = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating  = models.PositiveSmallIntegerField()  # 1–5
+    body    = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+```
 
-    def test_absolute_url(self):
-        self.assertIn(str(self.item.pk), self.item.get_absolute_url())
+## 5. Serializers
+
+```python
+class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.ReadOnlyField(source='author.username')
+    class Meta:
+        model  = Review
+        fields = ['id', 'author', 'rating', 'body', 'created_at']
+
+class BookSerializer(serializers.ModelSerializer):
+    reviews = ReviewSerializer(many=True, read_only=True)
+    owner   = serializers.ReadOnlyField(source='owner.username')
+    class Meta:
+        model  = Book
+        fields = ['id', 'title', 'author', 'genre', 'published',
+                  'description', 'owner', 'reviews', 'created_at']
+```
+
+## 6. ViewSets & Router
+
+```python
+class BookViewSet(viewsets.ModelViewSet):
+    queryset         = Book.objects.all().select_related('author', 'owner')
+    serializer_class = BookSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    filterset_fields   = ['genre', 'published']
+    search_fields      = ['title', 'author__name']
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+# urls.py
+router = DefaultRouter()
+router.register('books',   BookViewSet)
+router.register('authors', AuthorViewSet)
+```
+
+## 7. Custom Permission
+
+```python
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return obj.owner == request.user
+```
+
+## 8. Auth endpoints
+
+```python
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register(request):
+    serializer = UserSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save()
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({'token': token.key}, status=201)
+    return Response(serializer.errors, status=400)
+```
+
+## 9. Testing
+
+```python
+from rest_framework.test import APITestCase
+
+class BookAPITest(APITestCase):
+    def test_list_books_unauthenticated(self):
+        resp = self.client.get('/api/books/')
+        self.assertEqual(resp.status_code, 200)
+
+    def test_create_book_requires_auth(self):
+        resp = self.client.post('/api/books/', {'title': 'X'})
+        self.assertEqual(resp.status_code, 401)
 ```
 
 ## 10. Common Pitfalls
 
 | Pitfall | Solution |
 |---------|---------|
-| `SECRET_KEY` committed to git | Use `.env` + `python-decouple` |
-| Missing `{% csrf_token %}` | Always add to POST forms |
-| N+1 query problem | Use `select_related()` / `prefetch_related()` |
-| Hard-coded URLs in templates | Use `{% url 'name' %}` template tag |
-| DEBUG=True in production | Use environment variables |
+| Forgetting `perform_create` | Always set `owner` from `request.user` |
+| N+1 queries | Use `select_related` and `prefetch_related` |
+| Writable nested serializers | Use `SerializerMethodField` or custom `create` |
+| Missing `format_suffix_patterns` | Include DRF URLs properly in `urls.py` |

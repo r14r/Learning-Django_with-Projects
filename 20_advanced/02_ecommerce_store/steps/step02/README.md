@@ -1,50 +1,29 @@
-# Step 2 – Models & Database
+# Step 2 – Models: Category, Product, Order
 
-## What you'll add
-A database model with Django ORM and the Django admin interface.
+Add the data models and register them in the admin.
 
-## ecommerce_store/models.py
-
-```python
-from django.db import models
-from django.contrib.auth.models import User
-
-class Item(models.Model):
-    title       = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    created_at  = models.DateTimeField(auto_now_add=True)
-    updated_at  = models.DateTimeField(auto_now=True)
-    author      = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='items'
-    )
-
-    class Meta:
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return self.title
-```
-
-## ecommerce_store/admin.py
+## ecommerce_store/models.py  (key excerpt)
 
 ```python
-from django.contrib import admin
-from .models import Item
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+    slug = models.SlugField(unique=True)
+    def __str__(self): return self.name
 
-@admin.register(Item)
-class ItemAdmin(admin.ModelAdmin):
-    list_display  = ('title', 'author', 'created_at')
-    list_filter   = ('author',)
-    search_fields = ('title', 'description')
+class Product(models.Model):
+    category  = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
+    name      = models.CharField(max_length=200)
+    slug      = models.SlugField(unique=True)
+    price     = models.DecimalField(max_digits=8, decimal_places=2)
+    stock     = models.PositiveIntegerField(default=0)
+    available = models.BooleanField(default=True)
+    image     = models.ImageField(upload_to='products/', blank=True)
+    created_at= models.DateTimeField(auto_now_add=True)
+    def __str__(self): return self.name
 ```
-
-## Apply migrations
 
 ```bash
-python manage.py makemigrations ecommerce_store
+python manage.py makemigrations
 python manage.py migrate
 python manage.py createsuperuser
-python manage.py runserver
 ```
-
-Visit http://127.0.0.1:8000/admin/ and create a few items.

@@ -1,234 +1,115 @@
 # Tips & Implementation Guide: Real-Time Chat
 
-**Level:** Advanced  
-**Project:** 04_chat_app
+## 1. Install Channels
 
----
-
-## 1. Architecture Overview
-
-Use the standard Django MTV (Model-Template-View) architecture:
-
-```
-04_chat_app/
-├── manage.py
-├── config/                  # Project settings package
-│   ├── __init__.py
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-├── chat_app/  # Main application
-│   ├── migrations/
-│   ├── templates/
-│   │   └── chat_app/
-│   ├── static/
-│   ├── admin.py
-│   ├── apps.py
-│   ├── forms.py
-│   ├── models.py
-│   ├── tests.py
-│   ├── urls.py
-│   └── views.py
-├── templates/
-│   └── base.html
-├── requirements.txt
-└── .env.example
-```
-
-## 2. Recommended Frameworks & Libraries
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| Django | 4.2 LTS | Web framework |
-| django-crispy-forms | 2.x | Beautiful form rendering |
-| crispy-bootstrap5 | 2023.x | Bootstrap 5 template pack |
-| python-decouple | 3.x | Environment variable management |
-| Pillow | 10.x | Image handling (if needed) |
-| whitenoise | 6.x | Static file serving in production |
-
-Install with:
 ```bash
-pip install django django-crispy-forms crispy-bootstrap5 python-decouple whitenoise Pillow
-pip freeze > requirements.txt
+pip install django channels channels-redis daphne
 ```
 
-## 3. Models
+## 2. settings.py
 
 ```python
-# models.py
-from django.db import models
-from django.contrib.auth.models import User
-from django.urls import reverse
-
-class Item(models.Model):
-    title       = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    created_at  = models.DateTimeField(auto_now_add=True)
-    updated_at  = models.DateTimeField(auto_now=True)
-    author      = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='items'
-    )
-
-    class Meta:
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return self.title
-
-    def get_absolute_url(self):
-        return reverse('item-detail', kwargs={'pk': self.pk})
-```
-
-**Tips:**
-- Always define `__str__` and `get_absolute_url` on models.
-- Use `auto_now_add` for creation timestamps and `auto_now` for update timestamps.
-- Add `class Meta: ordering` to control default queryset ordering.
-
-## 4. Views
-
-Prefer **Class-Based Views** for CRUD:
-
-```python
-# views.py
-from django.views.generic import (
-    ListView, DetailView, CreateView, UpdateView, DeleteView
-)
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
-from .models import Item
-
-class ItemListView(ListView):
-    model = Item
-    paginate_by = 10
-
-class ItemDetailView(DetailView):
-    model = Item
-
-class ItemCreateView(LoginRequiredMixin, CreateView):
-    model = Item
-    fields = ['title', 'description']
-
-    def form_valid(self, form):
-        form.instance.author = self.request.user
-        return super().form_valid(form)
-
-class ItemUpdateView(LoginRequiredMixin, UpdateView):
-    model = Item
-    fields = ['title', 'description']
-
-class ItemDeleteView(LoginRequiredMixin, DeleteView):
-    model = Item
-    success_url = reverse_lazy('item-list')
-```
-
-## 5. URL Configuration
-
-```python
-# urls.py (app-level)
-from django.urls import path
-from . import views
-
-app_name = 'items'
-
-urlpatterns = [
-    path('',               views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/',      views.ItemDetailView.as_view(), name='detail'),
-    path('create/',        views.ItemCreateView.as_view(), name='create'),
-    path('<int:pk>/edit/', views.ItemUpdateView.as_view(), name='update'),
-    path('<int:pk>/del/',  views.ItemDeleteView.as_view(), name='delete'),
+INSTALLED_APPS = [
+    ...
+    'daphne',
+    'channels',
+    'chat_app',
 ]
-```
-
-## 6. Templates
-
-Use template inheritance to avoid repetition:
-
-```html
-<!-- templates/base.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{% block title %}Django App{% endblock %}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/css/bootstrap.min.css">
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <!-- navigation here -->
-    </nav>
-    <main class="container mt-4">
-        {% block content %}{% endblock %}
-    </main>
-</body>
-</html>
-```
-
-## 7. Forms
-
-```python
-# forms.py
-from django import forms
-from .models import Item
-
-class ItemForm(forms.ModelForm):
-    class Meta:
-        model = Item
-        fields = ['title', 'description']
-        widgets = {
-            'description': forms.Textarea(attrs={'rows': 4}),
-        }
-
-    def clean_title(self):
-        title = self.cleaned_data['title']
-        if len(title) < 3:
-            raise forms.ValidationError('Title must be at least 3 characters.')
-        return title
-```
-
-## 8. Settings Tips
-
-```python
-# Use python-decouple for environment variables
-from decouple import config
-
-SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
-DATABASES = {
+ASGI_APPLICATION = 'config.asgi.application'
+CHANNEL_LAYERS = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {'hosts': [('127.0.0.1', 6379)]},
     }
 }
 ```
 
-## 9. Testing Tips
-
+For development without Redis, use the in-memory layer:
 ```python
-# tests.py
-from django.test import TestCase, Client
-from django.contrib.auth.models import User
-from .models import Item
-
-class ItemModelTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user('testuser', password='pass123')
-        self.item = Item.objects.create(
-            title='Test Item', author=self.user
-        )
-
-    def test_str(self):
-        self.assertEqual(str(self.item), 'Test Item')
-
-    def test_absolute_url(self):
-        self.assertIn(str(self.item.pk), self.item.get_absolute_url())
+CHANNEL_LAYERS = {'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer'}}
 ```
 
-## 10. Common Pitfalls
+## 3. ASGI config
 
-| Pitfall | Solution |
-|---------|---------|
-| `SECRET_KEY` committed to git | Use `.env` + `python-decouple` |
-| Missing `{% csrf_token %}` | Always add to POST forms |
-| N+1 query problem | Use `select_related()` / `prefetch_related()` |
-| Hard-coded URLs in templates | Use `{% url 'name' %}` template tag |
-| DEBUG=True in production | Use environment variables |
+```python
+# config/asgi.py
+import os
+from django.core.asgi import get_asgi_application
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.auth import AuthMiddlewareStack
+import chat_app.routing
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+
+application = ProtocolTypeRouter({
+    'http':      get_asgi_application(),
+    'websocket': AuthMiddlewareStack(URLRouter(chat_app.routing.websocket_urlpatterns)),
+})
+```
+
+## 4. WebSocket Consumer
+
+```python
+# chat_app/consumers.py
+import json
+from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.db import database_sync_to_async
+
+class ChatConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.room_slug  = self.scope['url_route']['kwargs']['slug']
+        self.group_name = f'chat_{self.room_slug}'
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+    async def receive(self, text_data):
+        data    = json.loads(text_data)
+        message = data['message']
+        user    = self.scope['user']
+        await self.save_message(user, message)
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'chat_message',
+            'message': message,
+            'username': user.username,
+        })
+
+    async def chat_message(self, event):
+        await self.send(text_data=json.dumps({
+            'message':  event['message'],
+            'username': event['username'],
+        }))
+
+    @database_sync_to_async
+    def save_message(self, user, content):
+        from .models import Room, Message
+        room = Room.objects.get(slug=self.room_slug)
+        Message.objects.create(room=room, author=user, content=content)
+```
+
+## 5. Routing
+
+```python
+# chat_app/routing.py
+from django.urls import re_path
+from . import consumers
+
+websocket_urlpatterns = [
+    re_path(r'ws/chat/(?P<slug>\w+)/$', consumers.ChatConsumer.as_asgi()),
+]
+```
+
+## 6. Front-end JavaScript snippet
+
+```javascript
+const ws = new WebSocket(`ws://${window.location.host}/ws/chat/${roomSlug}/`);
+ws.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    chatBox.innerHTML += `<p><strong>${data.username}:</strong> ${data.message}</p>`;
+};
+document.querySelector('#send-btn').onclick = () => {
+    ws.send(JSON.stringify({message: document.querySelector('#msg-input').value}));
+};
+```

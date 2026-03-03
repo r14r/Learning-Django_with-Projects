@@ -1,8 +1,12 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from . import views
 
-app_name = 'rest_api'
+router = DefaultRouter()
+router.register('authors', views.AuthorViewSet)
+router.register('books',   views.BookViewSet)
+
 urlpatterns = [
-    path('',          views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/', views.ItemDetailView.as_view(), name='detail'),
+    path('health/', views.health, name='health'),
+    path('', include(router.urls)),
 ]

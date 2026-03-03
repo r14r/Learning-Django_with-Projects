@@ -8,84 +8,77 @@
 
 ## 1. Overview
 
-Post and search job listings with applications. This project teaches fundamental Django concepts appropriate for the **advanced** level including models, views, templates, forms and URL routing.
+Build a job board where companies can post vacancies and job seekers can
+search, apply, and track their application status.
 
 ## 2. Goals
 
-- Understand the Django request/response cycle
-- Create and apply database models with Django ORM
-- Build HTML templates using the Django template language
-- Handle user input through Django forms
-- Write clean, testable Django code
+- Separate Company and JobSeeker roles with different dashboards
+- Model jobs with location, salary range, type (full-time/part-time/remote)
+- Allow applicants to attach a resume and cover letter
+- Let employers accept or reject applications
 
 ## 3. Functional Requirements
 
-### 3.1 Core Features
-
 | # | Feature | Priority |
 |---|---------|----------|
-| 1 | Display a home page | Must |
-| 2 | List and detail views for the main entity | Must |
-| 3 | Create / Edit / Delete (CRUD) operations | Must |
-| 4 | Basic user authentication (login/logout) | Should |
-| 5 | Input validation and error messages | Should |
-| 6 | Responsive HTML layout | Could |
+| 1 | Post, edit, delete job listings (employers) | Must |
+| 2 | Search jobs by keyword, location, type | Must |
+| 3 | Apply to a job with resume + cover letter | Must |
+| 4 | Employer dashboard: view applications | Must |
+| 5 | Accept / reject applications | Must |
+| 6 | Applicant dashboard: track applications | Should |
+| 7 | Email notification on application status change | Could |
 
-### 3.2 User Stories
-
-- **As a visitor**, I want to browse the main content so that I can find what I need.
-- **As a registered user**, I want to create and manage my own entries.
-- **As an admin**, I want to manage all content through the Django admin interface.
-
-## 4. Non-Functional Requirements
-
-- The application must run on Django 4.2+ with Python 3.11+
-- Pages must load within 2 seconds on a local development server
-- All forms must validate input and display meaningful error messages
-- Code must follow PEP 8 style guidelines
-
-## 5. Data Model
+## 4. Data Model
 
 ```
-Entity
-├── id          : AutoField (primary key)
-├── title       : CharField(max_length=200)
-├── description : TextField(blank=True)
-├── created_at  : DateTimeField(auto_now_add=True)
-├── updated_at  : DateTimeField(auto_now=True)
-└── author      : ForeignKey(User, on_delete=CASCADE)
+Company
+├── id      : AutoField
+├── owner   : OneToOneField(User)
+├── name    : CharField
+├── website : URLField
+├── logo    : ImageField
+└── bio     : TextField
+
+Job
+├── id          : AutoField
+├── company     : ForeignKey(Company)
+├── title       : CharField
+├── description : TextField
+├── location    : CharField
+├── job_type    : CharField choices=[full_time, part_time, remote, contract]
+├── salary_min  : DecimalField(null=True)
+├── salary_max  : DecimalField(null=True)
+├── is_active   : BooleanField(default=True)
+└── posted_at   : DateTimeField(auto_now_add=True)
+
+Application
+├── id           : AutoField
+├── job          : ForeignKey(Job)
+├── applicant    : ForeignKey(User)
+├── cover_letter : TextField
+├── resume       : FileField(upload_to='resumes/')
+├── status       : CharField choices=[pending, accepted, rejected]
+└── applied_at   : DateTimeField(auto_now_add=True)
 ```
 
-## 6. URL Structure
+## 5. URL Structure
 
-| URL Pattern | View | Name |
-|-------------|------|------|
-| `/` | HomeView | `home` |
-| `/items/` | ListView | `item-list` |
-| `/items/<pk>/` | DetailView | `item-detail` |
-| `/items/create/` | CreateView | `item-create` |
-| `/items/<pk>/edit/` | UpdateView | `item-update` |
-| `/items/<pk>/delete/` | DeleteView | `item-delete` |
+| URL | View | Name |
+|-----|------|------|
+| `/` | JobListView | `job_board:list` |
+| `/job/<pk>/` | JobDetailView | `job_board:detail` |
+| `/job/create/` | JobCreateView | `job_board:create` |
+| `/job/<pk>/apply/` | apply_view | `job_board:apply` |
+| `/dashboard/` | EmployerDashboard | `job_board:employer-dashboard` |
+| `/my-applications/` | ApplicantDashboard | `job_board:my-applications` |
+| `/application/<pk>/status/<status>/` | update_status | `job_board:update-status` |
 
-## 7. Pages and Templates
+## 6. Acceptance Criteria
 
-- **Home** – Landing page with a brief introduction and call-to-action.
-- **List** – Paginated list of all items with search/filter.
-- **Detail** – Full view of a single item.
-- **Form** – Shared create/edit form with client-side validation.
-- **Delete confirmation** – Confirmation page before deleting.
-
-## 8. Acceptance Criteria
-
-- [ ] All CRUD operations work correctly
-- [ ] Forms display validation errors inline
-- [ ] Django admin shows all models with search and filter
-- [ ] At least 10 unit/integration tests pass (`python manage.py test`)
-- [ ] No secrets are hard-coded; environment variables are used
-- [ ] `requirements.txt` lists all dependencies with pinned versions
-
-## 9. Out of Scope
-
-- Payment processing
-- Real-time features (WebSockets)
-- Third-party social authentication
+- [ ] Only active jobs appear in the public list
+- [ ] Applicant cannot apply to the same job twice
+- [ ] Employer can only manage their own jobs
+- [ ] Resume upload stores files securely
+- [ ] At least 10 tests pass

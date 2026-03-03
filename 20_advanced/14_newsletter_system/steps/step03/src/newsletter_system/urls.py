@@ -3,6 +3,7 @@ from . import views
 
 app_name = 'newsletter_system'
 urlpatterns = [
-    path('',          views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/', views.ItemDetailView.as_view(), name='detail'),
+    path('subscribe/',               views.subscribe_view,  name='subscribe'),
+    path('confirm/<uuid:token>/',    views.confirm_view,    name='confirm'),
+    path('unsubscribe/<uuid:token>/', views.unsubscribe_view, name='unsubscribe'),
 ]

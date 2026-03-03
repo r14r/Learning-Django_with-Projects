@@ -1,4 +1,4 @@
 from django.http import HttpResponse
 
 def home(request):
-    return HttpResponse('<h1>Welcome to Blog with Comments!</h1>')
+    return HttpResponse('<h1>Blog with Comments</h1>')

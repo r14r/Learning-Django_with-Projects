@@ -8,84 +8,77 @@
 
 ## 1. Overview
 
-Recipe website with ingredients and categories. This project teaches fundamental Django concepts appropriate for the **advanced** level including models, views, templates, forms and URL routing.
+Build a recipe-sharing website where users can publish recipes with ingredients,
+step-by-step instructions, preparation times, and category tags.
 
 ## 2. Goals
 
-- Understand the Django request/response cycle
-- Create and apply database models with Django ORM
-- Build HTML templates using the Django template language
-- Handle user input through Django forms
-- Write clean, testable Django code
+- Model recipes with many ingredients, a preparation workflow and rich content
+- Build a search-and-filter recipe browser
+- Allow authenticated users to save favourite recipes
+- Calculate nutrition totals from per-ingredient data
 
 ## 3. Functional Requirements
 
-### 3.1 Core Features
-
 | # | Feature | Priority |
 |---|---------|----------|
-| 1 | Display a home page | Must |
-| 2 | List and detail views for the main entity | Must |
-| 3 | Create / Edit / Delete (CRUD) operations | Must |
-| 4 | Basic user authentication (login/logout) | Should |
-| 5 | Input validation and error messages | Should |
-| 6 | Responsive HTML layout | Could |
+| 1 | Browse recipes (list, search, category filter) | Must |
+| 2 | Recipe detail: ingredients, steps, times, servings | Must |
+| 3 | Create / edit / delete own recipes | Must |
+| 4 | Upload recipe photo | Must |
+| 5 | Ingredient list with quantities and units | Must |
+| 6 | Category/cuisine tags | Should |
+| 7 | Save favourites | Should |
+| 8 | Rating and reviews | Could |
 
-### 3.2 User Stories
-
-- **As a visitor**, I want to browse the main content so that I can find what I need.
-- **As a registered user**, I want to create and manage my own entries.
-- **As an admin**, I want to manage all content through the Django admin interface.
-
-## 4. Non-Functional Requirements
-
-- The application must run on Django 4.2+ with Python 3.11+
-- Pages must load within 2 seconds on a local development server
-- All forms must validate input and display meaningful error messages
-- Code must follow PEP 8 style guidelines
-
-## 5. Data Model
+## 4. Data Model
 
 ```
-Entity
-├── id          : AutoField (primary key)
-├── title       : CharField(max_length=200)
-├── description : TextField(blank=True)
-├── created_at  : DateTimeField(auto_now_add=True)
-├── updated_at  : DateTimeField(auto_now=True)
-└── author      : ForeignKey(User, on_delete=CASCADE)
+Category
+├── id   : AutoField
+├── name : CharField(max_length=100, unique=True)
+└── slug : SlugField(unique=True)
+
+Recipe
+├── id           : AutoField
+├── title        : CharField(max_length=200)
+├── slug         : SlugField(unique=True)
+├── author       : ForeignKey(User)
+├── categories   : ManyToManyField(Category)
+├── description  : TextField
+├── image        : ImageField(upload_to='recipes/')
+├── prep_time    : PositiveIntegerField (minutes)
+├── cook_time    : PositiveIntegerField (minutes)
+├── servings     : PositiveIntegerField
+├── instructions : TextField
+├── published    : BooleanField(default=False)
+└── created_at   : DateTimeField(auto_now_add=True)
+
+Ingredient
+├── id         : AutoField
+├── recipe     : ForeignKey(Recipe, related_name='ingredients')
+├── name       : CharField(max_length=100)
+├── quantity   : DecimalField
+├── unit       : CharField(max_length=50)
+└── order      : PositiveIntegerField
 ```
 
-## 6. URL Structure
+## 5. URL Structure
 
-| URL Pattern | View | Name |
-|-------------|------|------|
-| `/` | HomeView | `home` |
-| `/items/` | ListView | `item-list` |
-| `/items/<pk>/` | DetailView | `item-detail` |
-| `/items/create/` | CreateView | `item-create` |
-| `/items/<pk>/edit/` | UpdateView | `item-update` |
-| `/items/<pk>/delete/` | DeleteView | `item-delete` |
+| URL | View | Name |
+|-----|------|------|
+| `/` | RecipeListView | `recipe_book:list` |
+| `/category/<slug>/` | RecipeListView | `recipe_book:category` |
+| `/recipe/<slug>/` | RecipeDetailView | `recipe_book:detail` |
+| `/recipe/create/` | RecipeCreateView | `recipe_book:create` |
+| `/recipe/<slug>/edit/` | RecipeUpdateView | `recipe_book:update` |
+| `/recipe/<slug>/delete/` | RecipeDeleteView | `recipe_book:delete` |
+| `/my-recipes/` | MyRecipesView | `recipe_book:my-recipes` |
 
-## 7. Pages and Templates
+## 6. Acceptance Criteria
 
-- **Home** – Landing page with a brief introduction and call-to-action.
-- **List** – Paginated list of all items with search/filter.
-- **Detail** – Full view of a single item.
-- **Form** – Shared create/edit form with client-side validation.
-- **Delete confirmation** – Confirmation page before deleting.
-
-## 8. Acceptance Criteria
-
-- [ ] All CRUD operations work correctly
-- [ ] Forms display validation errors inline
-- [ ] Django admin shows all models with search and filter
-- [ ] At least 10 unit/integration tests pass (`python manage.py test`)
-- [ ] No secrets are hard-coded; environment variables are used
-- [ ] `requirements.txt` lists all dependencies with pinned versions
-
-## 9. Out of Scope
-
-- Payment processing
-- Real-time features (WebSockets)
-- Third-party social authentication
+- [ ] Ingredient formset validates quantities and units
+- [ ] Only published recipes appear in the public list
+- [ ] Search by title or ingredient name works
+- [ ] Author can toggle publish status
+- [ ] At least 10 tests pass

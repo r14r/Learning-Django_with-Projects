@@ -3,9 +3,10 @@ from . import views
 
 app_name = 'movie_database'
 urlpatterns = [
-    path('',               views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/',      views.ItemDetailView.as_view(), name='detail'),
-    path('create/',        views.ItemCreateView.as_view(), name='create'),
-    path('<int:pk>/edit/', views.ItemUpdateView.as_view(), name='update'),
-    path('<int:pk>/del/',  views.ItemDeleteView.as_view(), name='delete'),
+    path('',                       views.MovieListView.as_view(),   name='list'),
+    path('genre/<slug:slug>/',     views.MovieListView.as_view(),   name='genre'),
+    path('movie/<slug:slug>/',     views.MovieDetailView.as_view(), name='detail'),
+    path('movie/<int:pk>/rate/',   views.rate_movie,                name='rate'),
+    path('movie/<int:pk>/review/', views.add_review,                name='review'),
+    path('movie/<int:pk>/watchlist/', views.watchlist_toggle,       name='watchlist'),
 ]

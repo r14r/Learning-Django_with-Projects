@@ -1,50 +1,26 @@
-# Step 2 – Models & Database
-
-## What you'll add
-A database model with Django ORM and the Django admin interface.
-
-## blog_with_comments/models.py
+# Step 2 – Models: Tag, Post, Comment
 
 ```python
-from django.db import models
-from django.contrib.auth.models import User
+class Tag(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    slug = models.SlugField(unique=True)
 
-class Item(models.Model):
-    title       = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    created_at  = models.DateTimeField(auto_now_add=True)
-    updated_at  = models.DateTimeField(auto_now=True)
-    author      = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='items'
-    )
+class Post(models.Model):
+    STATUS = [('draft', 'Draft'), ('published', 'Published')]
+    title   = models.CharField(max_length=250)
+    slug    = models.SlugField(unique_for_date='publish')
+    author  = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
+    body    = models.TextField()
+    tags    = models.ManyToManyField(Tag, blank=True, related_name='posts')
+    status  = models.CharField(max_length=10, choices=STATUS, default='draft')
+    publish = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)
+    class Meta: ordering = ['-publish']
 
-    class Meta:
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return self.title
+class Comment(models.Model):
+    post   = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    body   = models.TextField()
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 ```
-
-## blog_with_comments/admin.py
-
-```python
-from django.contrib import admin
-from .models import Item
-
-@admin.register(Item)
-class ItemAdmin(admin.ModelAdmin):
-    list_display  = ('title', 'author', 'created_at')
-    list_filter   = ('author',)
-    search_fields = ('title', 'description')
-```
-
-## Apply migrations
-
-```bash
-python manage.py makemigrations blog_with_comments
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py runserver
-```
-
-Visit http://127.0.0.1:8000/admin/ and create a few items.

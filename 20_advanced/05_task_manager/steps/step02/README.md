@@ -1,50 +1,20 @@
-# Step 2 – Models & Database
-
-## What you'll add
-A database model with Django ORM and the Django admin interface.
-
-## task_manager/models.py
+# Step 2 – Models: Label, Task, Comment
 
 ```python
-from django.db import models
-from django.contrib.auth.models import User
+class Label(models.Model):
+    name  = models.CharField(max_length=50)
+    color = models.CharField(max_length=7, default='#6c757d')
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
 
-class Item(models.Model):
-    title       = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    created_at  = models.DateTimeField(auto_now_add=True)
-    updated_at  = models.DateTimeField(auto_now=True)
-    author      = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='items'
-    )
-
-    class Meta:
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return self.title
+class Task(models.Model):
+    STATUS   = [('todo','Todo'),('in_progress','In Progress'),('done','Done')]
+    PRIORITY = [('low','Low'),('medium','Medium'),('high','High'),('critical','Critical')]
+    title    = models.CharField(max_length=200)
+    status   = models.CharField(max_length=20, choices=STATUS, default='todo')
+    priority = models.CharField(max_length=10, choices=PRIORITY, default='medium')
+    due_date = models.DateField(null=True, blank=True)
+    owner    = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_tasks')
+    assignee = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,
+                                  blank=True, related_name='assigned_tasks')
+    labels   = models.ManyToManyField(Label, blank=True)
 ```
-
-## task_manager/admin.py
-
-```python
-from django.contrib import admin
-from .models import Item
-
-@admin.register(Item)
-class ItemAdmin(admin.ModelAdmin):
-    list_display  = ('title', 'author', 'created_at')
-    list_filter   = ('author',)
-    search_fields = ('title', 'description')
-```
-
-## Apply migrations
-
-```bash
-python manage.py makemigrations task_manager
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py runserver
-```
-
-Visit http://127.0.0.1:8000/admin/ and create a few items.

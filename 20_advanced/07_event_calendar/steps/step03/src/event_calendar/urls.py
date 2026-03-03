@@ -3,6 +3,6 @@ from . import views
 
 app_name = 'event_calendar'
 urlpatterns = [
-    path('',          views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/', views.ItemDetailView.as_view(), name='detail'),
+    path('',                    views.UpcomingEventsView.as_view(), name='list'),
+    path('event/<slug:slug>/',  views.EventDetailView.as_view(),    name='detail'),
 ]

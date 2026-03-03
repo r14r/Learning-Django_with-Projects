@@ -1,4 +1,4 @@
 from django.http import HttpResponse
 
 def home(request):
-    return HttpResponse('<h1>Welcome to Analytics Dashboard!</h1>')
+    return HttpResponse('<h1>Analytics Dashboard</h1>')

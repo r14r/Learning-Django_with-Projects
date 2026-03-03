@@ -1,63 +1,51 @@
-# Step 4 – Forms & CRUD Operations
+# Step 4 – Write Endpoints, Auth & Custom Permission
 
 ## What you'll add
-Create, Update and Delete views with a ModelForm.
+Token authentication, user registration, full CRUD, and an `IsOwnerOrReadOnly`
+permission class.
 
-## rest_api/forms.py
+## rest_api/permissions.py
 
 ```python
-from django import forms
-from .models import Item
+from rest_framework import permissions
 
-class ItemForm(forms.ModelForm):
-    class Meta:
-        model  = Item
-        fields = ['title', 'description']
-        widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'title':       forms.TextInput(attrs={'class': 'form-control'}),
-        }
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return obj.owner == request.user
 ```
 
-## rest_api/views.py  (add to existing file)
+## rest_api/views.py  (full CRUD + auth)
 
 ```python
-from django.views.generic import CreateView, UpdateView, DeleteView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
-from .forms import ItemForm
+from rest_framework import viewsets, generics, status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
+from django.contrib.auth.models import User
 
-class ItemCreateView(LoginRequiredMixin, CreateView):
-    model      = Item
-    form_class = ItemForm
-    success_url = reverse_lazy('rest_api:list')
+from .permissions import IsOwnerOrReadOnly
+from .serializers import BookSerializer, AuthorSerializer, ReviewSerializer, UserSerializer
 
-    def form_valid(self, form):
-        form.instance.author = self.request.user
-        return super().form_valid(form)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register(request):
+    serializer = UserSerializer(data=request.data)
+    if serializer.is_valid():
+        user  = User.objects.create_user(**serializer.validated_data)
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({'token': token.key}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ItemUpdateView(LoginRequiredMixin, UpdateView):
-    model      = Item
-    form_class = ItemForm
-    success_url = reverse_lazy('rest_api:list')
+class BookViewSet(viewsets.ModelViewSet):
+    queryset           = Book.objects.select_related('author', 'owner').prefetch_related('reviews')
+    serializer_class   = BookSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    search_fields      = ['title', 'author__name']
+    filterset_fields   = ['genre', 'published']
 
-class ItemDeleteView(LoginRequiredMixin, DeleteView):
-    model       = Item
-    success_url = reverse_lazy('rest_api:list')
-```
-
-## rest_api/urls.py  (updated)
-
-```python
-from django.urls import path
-from . import views
-
-app_name = 'rest_api'
-urlpatterns = [
-    path('',               views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/',      views.ItemDetailView.as_view(), name='detail'),
-    path('create/',        views.ItemCreateView.as_view(), name='create'),
-    path('<int:pk>/edit/', views.ItemUpdateView.as_view(), name='update'),
-    path('<int:pk>/del/',  views.ItemDeleteView.as_view(), name='delete'),
-]
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 ```

@@ -1,11 +1,17 @@
 from django import forms
-from .models import Item
+from .models import Subscriber, Campaign
 
-class ItemForm(forms.ModelForm):
+
+class SubscribeForm(forms.Form):
+    email = forms.EmailField()
+    name  = forms.CharField(max_length=100, required=False)
+
+
+class CampaignForm(forms.ModelForm):
     class Meta:
-        model  = Item
-        fields = ['title', 'description']
+        model  = Campaign
+        fields = ['subject', 'body_text', 'body_html']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'title':       forms.TextInput(attrs={'class': 'form-control'}),
+            'body_text': forms.Textarea(attrs={'rows': 6}),
+            'body_html': forms.Textarea(attrs={'rows': 10}),
         }

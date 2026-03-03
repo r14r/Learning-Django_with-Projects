@@ -8,84 +8,64 @@
 
 ## 1. Overview
 
-Email subscription and campaign management. This project teaches fundamental Django concepts appropriate for the **advanced** level including models, views, templates, forms and URL routing.
+Build a newsletter platform where visitors can subscribe, admins can compose
+and send email campaigns, and subscribers can unsubscribe via a tokenised link.
 
 ## 2. Goals
 
-- Understand the Django request/response cycle
-- Create and apply database models with Django ORM
-- Build HTML templates using the Django template language
-- Handle user input through Django forms
-- Write clean, testable Django code
+- Manage mailing list with double opt-in confirmation
+- Compose HTML campaigns and preview them
+- Send campaigns via Django's email backend (configurable SMTP)
+- Track open/click stats (optional)
 
 ## 3. Functional Requirements
 
-### 3.1 Core Features
-
 | # | Feature | Priority |
 |---|---------|----------|
-| 1 | Display a home page | Must |
-| 2 | List and detail views for the main entity | Must |
-| 3 | Create / Edit / Delete (CRUD) operations | Must |
-| 4 | Basic user authentication (login/logout) | Should |
-| 5 | Input validation and error messages | Should |
-| 6 | Responsive HTML layout | Could |
+| 1 | Subscribe via public form | Must |
+| 2 | Confirmation email with activation link | Must |
+| 3 | Unsubscribe via token link | Must |
+| 4 | Create and manage campaigns | Must |
+| 5 | Send campaign to all confirmed subscribers | Must |
+| 6 | Subscriber count dashboard | Should |
+| 7 | Campaign open tracking (image pixel) | Could |
 
-### 3.2 User Stories
-
-- **As a visitor**, I want to browse the main content so that I can find what I need.
-- **As a registered user**, I want to create and manage my own entries.
-- **As an admin**, I want to manage all content through the Django admin interface.
-
-## 4. Non-Functional Requirements
-
-- The application must run on Django 4.2+ with Python 3.11+
-- Pages must load within 2 seconds on a local development server
-- All forms must validate input and display meaningful error messages
-- Code must follow PEP 8 style guidelines
-
-## 5. Data Model
+## 4. Data Model
 
 ```
-Entity
-├── id          : AutoField (primary key)
-├── title       : CharField(max_length=200)
-├── description : TextField(blank=True)
-├── created_at  : DateTimeField(auto_now_add=True)
-├── updated_at  : DateTimeField(auto_now=True)
-└── author      : ForeignKey(User, on_delete=CASCADE)
+Subscriber
+├── id         : AutoField
+├── email      : EmailField(unique=True)
+├── name       : CharField(max_length=100, blank=True)
+├── token      : UUIDField(default=uuid4, unique=True)
+├── confirmed  : BooleanField(default=False)
+└── created_at : DateTimeField(auto_now_add=True)
+
+Campaign
+├── id           : AutoField
+├── owner        : ForeignKey(User)
+├── subject      : CharField(max_length=300)
+├── body_text    : TextField
+├── body_html    : TextField(blank=True)
+├── sent_at      : DateTimeField(null=True, blank=True)
+└── created_at   : DateTimeField(auto_now_add=True)
 ```
 
-## 6. URL Structure
+## 5. URL Structure
 
-| URL Pattern | View | Name |
-|-------------|------|------|
-| `/` | HomeView | `home` |
-| `/items/` | ListView | `item-list` |
-| `/items/<pk>/` | DetailView | `item-detail` |
-| `/items/create/` | CreateView | `item-create` |
-| `/items/<pk>/edit/` | UpdateView | `item-update` |
-| `/items/<pk>/delete/` | DeleteView | `item-delete` |
+| URL | View | Name |
+|-----|------|------|
+| `/subscribe/` | subscribe_view | `newsletter_system:subscribe` |
+| `/confirm/<token>/` | confirm_view | `newsletter_system:confirm` |
+| `/unsubscribe/<token>/` | unsubscribe_view | `newsletter_system:unsubscribe` |
+| `/campaigns/` | CampaignListView | `newsletter_system:campaign-list` |
+| `/campaigns/create/` | CampaignCreateView | `newsletter_system:campaign-create` |
+| `/campaigns/<pk>/send/` | send_campaign | `newsletter_system:send` |
 
-## 7. Pages and Templates
+## 6. Acceptance Criteria
 
-- **Home** – Landing page with a brief introduction and call-to-action.
-- **List** – Paginated list of all items with search/filter.
-- **Detail** – Full view of a single item.
-- **Form** – Shared create/edit form with client-side validation.
-- **Delete confirmation** – Confirmation page before deleting.
-
-## 8. Acceptance Criteria
-
-- [ ] All CRUD operations work correctly
-- [ ] Forms display validation errors inline
-- [ ] Django admin shows all models with search and filter
-- [ ] At least 10 unit/integration tests pass (`python manage.py test`)
-- [ ] No secrets are hard-coded; environment variables are used
-- [ ] `requirements.txt` lists all dependencies with pinned versions
-
-## 9. Out of Scope
-
-- Payment processing
-- Real-time features (WebSockets)
-- Third-party social authentication
+- [ ] Subscribe form validates email format
+- [ ] Confirmation link activates the subscriber
+- [ ] Unsubscribe link removes subscriber
+- [ ] Campaign sends one email per confirmed subscriber
+- [ ] At least 8 tests pass

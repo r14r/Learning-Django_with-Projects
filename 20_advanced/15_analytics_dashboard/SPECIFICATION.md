@@ -8,84 +8,61 @@
 
 ## 1. Overview
 
-Data visualisation dashboard with charts. This project teaches fundamental Django concepts appropriate for the **advanced** level including models, views, templates, forms and URL routing.
+Build a website analytics dashboard that tracks page views and custom events,
+then visualises the data with interactive charts (using Chart.js).
 
 ## 2. Goals
 
-- Understand the Django request/response cycle
-- Create and apply database models with Django ORM
-- Build HTML templates using the Django template language
-- Handle user input through Django forms
-- Write clean, testable Django code
+- Record page views automatically via a Django middleware or JS beacon
+- Store custom events (button clicks, form submissions) via an API endpoint
+- Build a dashboard with line charts (daily views), bar charts (top pages),
+  and summary cards (total views, unique visitors, bounce rate)
 
 ## 3. Functional Requirements
 
-### 3.1 Core Features
-
 | # | Feature | Priority |
 |---|---------|----------|
-| 1 | Display a home page | Must |
-| 2 | List and detail views for the main entity | Must |
-| 3 | Create / Edit / Delete (CRUD) operations | Must |
-| 4 | Basic user authentication (login/logout) | Should |
-| 5 | Input validation and error messages | Should |
-| 6 | Responsive HTML layout | Could |
+| 1 | Auto-track page views (middleware) | Must |
+| 2 | API endpoint to record custom events | Must |
+| 3 | Dashboard: total visits today / this week / this month | Must |
+| 4 | Chart: daily page views (last 30 days) | Must |
+| 5 | Top 10 most-visited pages | Must |
+| 6 | Browser / OS breakdown | Should |
+| 7 | Real-time visitors (last 5 min) | Could |
 
-### 3.2 User Stories
-
-- **As a visitor**, I want to browse the main content so that I can find what I need.
-- **As a registered user**, I want to create and manage my own entries.
-- **As an admin**, I want to manage all content through the Django admin interface.
-
-## 4. Non-Functional Requirements
-
-- The application must run on Django 4.2+ with Python 3.11+
-- Pages must load within 2 seconds on a local development server
-- All forms must validate input and display meaningful error messages
-- Code must follow PEP 8 style guidelines
-
-## 5. Data Model
+## 4. Data Model
 
 ```
-Entity
-├── id          : AutoField (primary key)
-├── title       : CharField(max_length=200)
-├── description : TextField(blank=True)
-├── created_at  : DateTimeField(auto_now_add=True)
-├── updated_at  : DateTimeField(auto_now=True)
-└── author      : ForeignKey(User, on_delete=CASCADE)
+PageView
+├── id         : AutoField
+├── path       : CharField(max_length=500)
+├── method     : CharField(max_length=10)
+├── user       : ForeignKey(User, null=True)
+├── session_key : CharField(max_length=40)
+├── user_agent : TextField(blank=True)
+├── referer    : URLField(blank=True)
+├── ip_address : GenericIPAddressField(null=True)
+└── timestamp  : DateTimeField(auto_now_add=True)
+
+Event
+├── id         : AutoField
+├── name       : CharField(max_length=100)
+├── properties : JSONField(default=dict)
+├── session_key : CharField(max_length=40, blank=True)
+└── timestamp  : DateTimeField(auto_now_add=True)
 ```
 
-## 6. URL Structure
+## 5. URL Structure
 
-| URL Pattern | View | Name |
-|-------------|------|------|
-| `/` | HomeView | `home` |
-| `/items/` | ListView | `item-list` |
-| `/items/<pk>/` | DetailView | `item-detail` |
-| `/items/create/` | CreateView | `item-create` |
-| `/items/<pk>/edit/` | UpdateView | `item-update` |
-| `/items/<pk>/delete/` | DeleteView | `item-delete` |
+| URL | View | Name |
+|-----|------|------|
+| `/dashboard/` | DashboardView | `analytics_dashboard:dashboard` |
+| `/api/event/` | record_event | `analytics_dashboard:event` |
+| `/api/stats/daily/` | daily_stats | `analytics_dashboard:daily-stats` |
 
-## 7. Pages and Templates
+## 6. Acceptance Criteria
 
-- **Home** – Landing page with a brief introduction and call-to-action.
-- **List** – Paginated list of all items with search/filter.
-- **Detail** – Full view of a single item.
-- **Form** – Shared create/edit form with client-side validation.
-- **Delete confirmation** – Confirmation page before deleting.
-
-## 8. Acceptance Criteria
-
-- [ ] All CRUD operations work correctly
-- [ ] Forms display validation errors inline
-- [ ] Django admin shows all models with search and filter
-- [ ] At least 10 unit/integration tests pass (`python manage.py test`)
-- [ ] No secrets are hard-coded; environment variables are used
-- [ ] `requirements.txt` lists all dependencies with pinned versions
-
-## 9. Out of Scope
-
-- Payment processing
-- Real-time features (WebSockets)
-- Third-party social authentication
+- [ ] Middleware records page views for every non-admin request
+- [ ] Dashboard shows correct counts for today
+- [ ] Top pages ordered by view count
+- [ ] At least 8 tests pass

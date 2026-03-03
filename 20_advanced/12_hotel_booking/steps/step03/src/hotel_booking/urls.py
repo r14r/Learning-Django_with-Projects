@@ -3,6 +3,6 @@ from . import views
 
 app_name = 'hotel_booking'
 urlpatterns = [
-    path('',          views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/', views.ItemDetailView.as_view(), name='detail'),
+    path('',             views.RoomListView.as_view(),   name='list'),
+    path('room/<int:pk>/', views.RoomDetailView.as_view(), name='room-detail'),
 ]

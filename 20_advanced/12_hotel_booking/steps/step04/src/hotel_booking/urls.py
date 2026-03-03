@@ -3,9 +3,9 @@ from . import views
 
 app_name = 'hotel_booking'
 urlpatterns = [
-    path('',               views.ItemListView.as_view(),   name='list'),
-    path('<int:pk>/',      views.ItemDetailView.as_view(), name='detail'),
-    path('create/',        views.ItemCreateView.as_view(), name='create'),
-    path('<int:pk>/edit/', views.ItemUpdateView.as_view(), name='update'),
-    path('<int:pk>/del/',  views.ItemDeleteView.as_view(), name='delete'),
+    path('',                          views.RoomListView.as_view(),   name='list'),
+    path('room/<int:pk>/',            views.RoomDetailView.as_view(), name='room-detail'),
+    path('book/<int:pk>/',            views.book_view,                name='book'),
+    path('bookings/',                 views.guest_dashboard,          name='my-bookings'),
+    path('bookings/<int:pk>/cancel/', views.cancel_booking,           name='cancel'),
 ]

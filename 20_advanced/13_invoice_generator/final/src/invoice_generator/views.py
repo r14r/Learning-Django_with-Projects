@@ -1,37 +1,63 @@
-from django.views.generic import (
-    ListView, DetailView, CreateView, UpdateView, DeleteView,
-)
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
+from django.forms import inlineformset_factory
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponse
 from django.urls import reverse_lazy
-from .models import Item
-from .forms import ItemForm
+from .models import Client as InvoiceClient, Invoice, LineItem
+from .forms import InvoiceForm, ClientForm
+
+LineItemFormSet = inlineformset_factory(
+    Invoice, LineItem,
+    fields=['description', 'quantity', 'unit_price', 'order'],
+    extra=3, can_delete=True,
+)
 
 
-class ItemListView(ListView):
-    model       = Item
-    paginate_by = 10
+class InvoiceListView(LoginRequiredMixin, ListView):
+    template_name       = 'invoice_generator/invoice_list.html'
+    context_object_name = 'invoices'
+
+    def get_queryset(self):
+        return Invoice.objects.filter(owner=self.request.user).select_related('client')
 
 
-class ItemDetailView(DetailView):
-    model = Item
+class InvoiceDetailView(LoginRequiredMixin, DetailView):
+    model         = Invoice
+    template_name = 'invoice_generator/invoice_detail.html'
 
 
-class ItemCreateView(LoginRequiredMixin, CreateView):
-    model       = Item
-    form_class  = ItemForm
-    success_url = reverse_lazy('invoice_generator:list')
+class ClientListView(LoginRequiredMixin, ListView):
+    template_name       = 'invoice_generator/client_list.html'
+    context_object_name = 'clients'
 
-    def form_valid(self, form):
-        form.instance.author = self.request.user
-        return super().form_valid(form)
+    def get_queryset(self):
+        return InvoiceClient.objects.filter(owner=self.request.user)
 
 
-class ItemUpdateView(LoginRequiredMixin, UpdateView):
-    model       = Item
-    form_class  = ItemForm
-    success_url = reverse_lazy('invoice_generator:list')
+@login_required
+def invoice_create(request):
+    if request.method == 'POST':
+        form    = InvoiceForm(request.POST)
+        formset = LineItemFormSet(request.POST)
+        if form.is_valid() and formset.is_valid():
+            invoice        = form.save(commit=False)
+            invoice.owner  = request.user
+            invoice.save()
+            formset.instance = invoice
+            formset.save()
+            return redirect(invoice.get_absolute_url())
+    else:
+        form    = InvoiceForm()
+        formset = LineItemFormSet()
+    return render(request, 'invoice_generator/invoice_form.html', {'form': form, 'formset': formset})
 
 
-class ItemDeleteView(LoginRequiredMixin, DeleteView):
-    model       = Item
-    success_url = reverse_lazy('invoice_generator:list')
+@login_required
+def update_status(request, pk, status):
+    invoice = get_object_or_404(Invoice, pk=pk, owner=request.user)
+    if status in dict(Invoice.STATUS):
+        invoice.status = status
+        invoice.save()
+    return redirect('invoice_generator:detail', pk=pk)

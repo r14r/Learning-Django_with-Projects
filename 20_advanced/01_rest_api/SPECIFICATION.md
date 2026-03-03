@@ -1,4 +1,4 @@
-# Specification: REST API with DRF
+# Specification: REST API with Django REST Framework
 
 **Level:** Advanced  
 **Project:** 01_rest_api  
@@ -8,15 +8,17 @@
 
 ## 1. Overview
 
-Full REST API using Django REST Framework. This project teaches fundamental Django concepts appropriate for the **advanced** level including models, views, templates, forms and URL routing.
+Build a production-ready REST API for a **Book Library** service using Django REST
+Framework (DRF). The API exposes books, authors, and reviews with full CRUD,
+filtering, searching, pagination, and token-based authentication.
 
 ## 2. Goals
 
-- Understand the Django request/response cycle
-- Create and apply database models with Django ORM
-- Build HTML templates using the Django template language
-- Handle user input through Django forms
-- Write clean, testable Django code
+- Understand how to design and build a REST API with DRF
+- Use ModelSerializer, ViewSet, and DefaultRouter
+- Implement token authentication and per-object permissions
+- Add filtering, search, and ordering via `django-filter`
+- Write comprehensive API tests with DRF's `APITestCase`
 
 ## 3. Functional Requirements
 
@@ -24,68 +26,84 @@ Full REST API using Django REST Framework. This project teaches fundamental Djan
 
 | # | Feature | Priority |
 |---|---------|----------|
-| 1 | Display a home page | Must |
-| 2 | List and detail views for the main entity | Must |
-| 3 | Create / Edit / Delete (CRUD) operations | Must |
-| 4 | Basic user authentication (login/logout) | Should |
-| 5 | Input validation and error messages | Should |
-| 6 | Responsive HTML layout | Could |
+| 1 | CRUD endpoints for Books | Must |
+| 2 | CRUD endpoints for Authors | Must |
+| 3 | Nested reviews on a book | Must |
+| 4 | Token-based authentication (login / register) | Must |
+| 5 | Search books by title or author name | Should |
+| 6 | Filter books by genre and published year | Should |
+| 7 | Pagination (page-based, 20 per page) | Should |
+| 8 | Browsable API (DRF default) | Could |
 
 ### 3.2 User Stories
 
-- **As a visitor**, I want to browse the main content so that I can find what I need.
-- **As a registered user**, I want to create and manage my own entries.
-- **As an admin**, I want to manage all content through the Django admin interface.
+- **As a consumer**, I want to list books with `GET /api/books/` so I can browse the catalogue.
+- **As a consumer**, I want to search for books with `?search=` so I can find what I need.
+- **As an authenticated user**, I want to `POST /api/books/` to add a new book.
+- **As the book owner**, I want to `PUT /api/books/{id}/` to update my book.
+- **As an authenticated user**, I want to `POST /api/books/{id}/reviews/` to leave a review.
 
 ## 4. Non-Functional Requirements
 
-- The application must run on Django 4.2+ with Python 3.11+
-- Pages must load within 2 seconds on a local development server
-- All forms must validate input and display meaningful error messages
-- Code must follow PEP 8 style guidelines
+- All endpoints return JSON (Content-Type: application/json)
+- Authentication uses `Token` header (`Authorization: Token <token>`)
+- API must return proper HTTP status codes (200, 201, 400, 401, 403, 404)
+- Code must follow PEP 8 and DRF conventions
 
 ## 5. Data Model
 
 ```
-Entity
-├── id          : AutoField (primary key)
-├── title       : CharField(max_length=200)
-├── description : TextField(blank=True)
-├── created_at  : DateTimeField(auto_now_add=True)
-├── updated_at  : DateTimeField(auto_now=True)
-└── author      : ForeignKey(User, on_delete=CASCADE)
+Author
+├── id          : AutoField
+├── name        : CharField(max_length=200)
+├── bio         : TextField(blank=True)
+└── created_at  : DateTimeField(auto_now_add=True)
+
+Book
+├── id           : AutoField
+├── title        : CharField(max_length=300)
+├── author       : ForeignKey(Author)
+├── genre        : CharField(max_length=100)
+├── published    : IntegerField (year)
+├── description  : TextField(blank=True)
+├── cover        : ImageField(upload_to='covers/', blank=True)
+├── owner        : ForeignKey(User)  ← who added the record
+└── created_at   : DateTimeField(auto_now_add=True)
+
+Review
+├── id         : AutoField
+├── book       : ForeignKey(Book, related_name='reviews')
+├── author     : ForeignKey(User)
+├── rating     : PositiveSmallIntegerField (1–5)
+├── body       : TextField
+└── created_at : DateTimeField(auto_now_add=True)
 ```
 
-## 6. URL Structure
+## 6. API Endpoints
 
-| URL Pattern | View | Name |
-|-------------|------|------|
-| `/` | HomeView | `home` |
-| `/items/` | ListView | `item-list` |
-| `/items/<pk>/` | DetailView | `item-detail` |
-| `/items/create/` | CreateView | `item-create` |
-| `/items/<pk>/edit/` | UpdateView | `item-update` |
-| `/items/<pk>/delete/` | DeleteView | `item-delete` |
+| Method | URL | Description |
+|--------|-----|-------------|
+| POST | `/api/auth/register/` | Register a new user |
+| POST | `/api/auth/login/` | Obtain auth token |
+| GET | `/api/authors/` | List authors |
+| POST | `/api/authors/` | Create author (auth required) |
+| GET/PUT/DELETE | `/api/authors/{id}/` | Detail / update / delete |
+| GET | `/api/books/` | List books (search, filter, paginate) |
+| POST | `/api/books/` | Create book (auth required) |
+| GET/PUT/DELETE | `/api/books/{id}/` | Detail / update / delete |
+| GET/POST | `/api/books/{id}/reviews/` | List or add reviews |
 
-## 7. Pages and Templates
+## 7. Acceptance Criteria
 
-- **Home** – Landing page with a brief introduction and call-to-action.
-- **List** – Paginated list of all items with search/filter.
-- **Detail** – Full view of a single item.
-- **Form** – Shared create/edit form with client-side validation.
-- **Delete confirmation** – Confirmation page before deleting.
+- [ ] All CRUD operations return correct HTTP status codes
+- [ ] Unauthenticated requests to protected endpoints return 401
+- [ ] Only the record owner can update or delete it (403 otherwise)
+- [ ] Search and filter query parameters work correctly
+- [ ] At least 12 API tests pass (`python manage.py test`)
+- [ ] `requirements.txt` pins all dependencies
 
-## 8. Acceptance Criteria
+## 8. Out of Scope
 
-- [ ] All CRUD operations work correctly
-- [ ] Forms display validation errors inline
-- [ ] Django admin shows all models with search and filter
-- [ ] At least 10 unit/integration tests pass (`python manage.py test`)
-- [ ] No secrets are hard-coded; environment variables are used
-- [ ] `requirements.txt` lists all dependencies with pinned versions
-
-## 9. Out of Scope
-
-- Payment processing
-- Real-time features (WebSockets)
-- Third-party social authentication
+- OAuth2 / social login
+- Real-time WebSocket notifications
+- Full-text search with Elasticsearch

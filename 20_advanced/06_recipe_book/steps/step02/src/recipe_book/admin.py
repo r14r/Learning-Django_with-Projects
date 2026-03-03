@@ -1,8 +1,22 @@
 from django.contrib import admin
-from .models import Item
+from .models import Category, Recipe, Ingredient
 
-@admin.register(Item)
-class ItemAdmin(admin.ModelAdmin):
-    list_display  = ('title', 'author', 'created_at')
-    list_filter   = ('author',)
-    search_fields = ('title', 'description')
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    prepopulated_fields = {'slug': ('name',)}
+
+
+class IngredientInline(admin.TabularInline):
+    model = Ingredient
+    extra = 3
+
+
+@admin.register(Recipe)
+class RecipeAdmin(admin.ModelAdmin):
+    list_display    = ('title', 'author', 'published', 'created_at')
+    list_filter     = ('published', 'categories')
+    search_fields   = ('title',)
+    prepopulated_fields = {'slug': ('title',)}
+    filter_horizontal   = ('categories',)
+    inlines             = [IngredientInline]
